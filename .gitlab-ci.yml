@@ -1,0 +1,23 @@
+image: docker:latest
+
+stages:
+  - deploy
+
+deploy_test:
+  stage: deploy_gw
+  script:
+    - docker network create web_net || true
+    - docker container stop -t 20 ddos || true
+    - docker container rm ddos || true
+    - docker build -t registry.h2hsecure.com/ddos/worker:latest .
+    - >
+      docker run -d
+      --restart=always
+      --network=web_net
+      --name=ddos
+      registry.h2hsecure.com/ddos/worker:latest
+
+  tags:
+    - webcontents
+  only:
+    - master
