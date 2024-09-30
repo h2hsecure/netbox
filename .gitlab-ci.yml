@@ -4,7 +4,7 @@ stages:
   - deploy
 
 deploy_test:
-  stage: deploy_gw
+  stage: deploy
   script:
     - docker network create web_net || true
     - docker container stop -t 20 ddos || true
