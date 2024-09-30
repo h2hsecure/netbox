@@ -20,6 +20,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
 
-EXPOSE 8080
+EXPOSE 80
 
 ENTRYPOINT ["sh", "-c", "/run.sh"]
