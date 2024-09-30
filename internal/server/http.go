@@ -69,12 +69,26 @@ func authzHandler(c *gin.Context) {
 		return
 	}
 
-	_, err = token.VerifyToken(v)
+	t, err := token.VerifyToken(v)
 
 	if err != nil {
 		log.Err(err).Send()
 		c.Writer.Header().Add("Location", "/ddos/app/")
 		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	sub, _ := t.Claims.GetSubject()
+
+	last, err := cache.Inc(c, sub, 1)
+
+	if err != nil {
+		log.Warn().Interface("error", err).Send()
+
+	}
+
+	if last > 100 {
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 

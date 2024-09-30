@@ -44,14 +44,14 @@ func (i *Impl) Get(ctx context.Context, key string) (string, error) {
 	return string(item.Value), nil
 }
 
-func (i *Impl) Inc(ctx context.Context, key string, delta int) error {
-	_, err := i.m.Increment(key, uint64(delta))
+func (i *Impl) Inc(ctx context.Context, key string, delta int) (uint64, error) {
+	last, err := i.m.Increment(key, uint64(delta))
 
 	if err != nil {
-		return fmt.Errorf("memcache-increment: %w", err)
+		return 0, fmt.Errorf("memcache-increment: %w", err)
 	}
 
-	return nil
+	return last, nil
 }
 func (i *Impl) Dec(ctx context.Context, key string, delta int) error {
 	_, err := i.m.Decrement(key, uint64(delta))
