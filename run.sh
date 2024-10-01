@@ -1,14 +1,12 @@
 #!/bin/sh
+CONTEXT_PATH="${CONTEXT_PATH:-ddos}"
 
 /usr/bin/memcached -p 11211 -u memcached -m 256 -c 1024 -t 4 &
 
 # Start the first process
 /app/ddos &
 
-export UI_HOST=h2hsecurecom
-export UI_PORT=80
-
-envsubst '$BACKEND_HOST $BACKEND_PORT' < /app/nginx.conf > /etc/nginx/nginx.conf
+envsubst '$CONTEXT_PATH $BACKEND_HOST $BACKEND_PORT' < /app/nginx.conf > /etc/nginx/nginx.conf
 
 # Start the second process
 /usr/sbin/nginx -g "daemon off;" -c /etc/nginx/nginx.conf &

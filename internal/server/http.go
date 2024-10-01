@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
+	"strings"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
@@ -36,10 +38,11 @@ func CreateHttpServer(port string, memcache ports.Cache) *gin.Engine {
 	cache = memcache
 	gin.SetMode(gin.ReleaseMode)
 	mux := gin.Default()
+	contextPath := os.Getenv("CONTEXT_PATH")
 
-	mux.GET("/ddos/auth", authzHandler)
-	mux.GET("/ddos/check", checkHandler)
-	mux.StaticFS("/ddos/app/", staticWeb())
+	mux.GET("/"+contextPath+"/auth", authzHandler)
+	mux.GET("/"+contextPath+"/check", checkHandler)
+	mux.StaticFS("/"+contextPath+"/app/", staticWeb())
 
 	fmt.Printf("Server is running on port %s\n", port)
 	if err := mux.Run("localhost:" + port); err != nil {
@@ -55,11 +58,18 @@ func authzHandler(c *gin.Context) {
 		Str("path", c.Request.URL.Path).
 		Msgf("auth request")
 
+	contextPath := os.Getenv("CONTEXT_PATH")
+
+	if strings.HasPrefix(c.Request.URL.Path, "/"+contextPath+"/") {
+		c.Status(http.StatusOK)
+		return
+	}
+
 	v, err := c.Cookie(COOKIE_NAME)
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			c.Writer.Header().Add("Location", "/ddos/app/")
+			c.Writer.Header().Add("Location", "/"+contextPath+"/app/")
 			c.Writer.Header().Add("Referer", c.Request.Referer())
 			c.AbortWithStatus(http.StatusUnauthorized)
 		default:
@@ -73,7 +83,7 @@ func authzHandler(c *gin.Context) {
 
 	if err != nil {
 		log.Err(err).Send()
-		c.Writer.Header().Add("Location", "/ddos/app/")
+		c.Writer.Header().Add("Location", "/"+contextPath+"/app/")
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
@@ -87,7 +97,7 @@ func authzHandler(c *gin.Context) {
 	}
 
 	if last > 100 {
-		c.Writer.Header().Add("Location", "/ddos/app/forbiden")
+		c.Writer.Header().Add("Location", "/"+contextPath+"/app/forbiden")
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
