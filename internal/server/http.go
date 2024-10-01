@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"strings"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
@@ -60,10 +59,10 @@ func authzHandler(c *gin.Context) {
 
 	contextPath := os.Getenv("CONTEXT_PATH")
 
-	if strings.HasPrefix(c.Request.URL.Path, "/"+contextPath+"/") {
-		c.Status(http.StatusOK)
-		return
-	}
+	// if strings.HasPrefix(c.Request.URL.Path, "/"+contextPath+"/") {
+	// 	c.Status(http.StatusOK)
+	// 	return
+	// }
 
 	v, err := c.Cookie(COOKIE_NAME)
 	if err != nil {
