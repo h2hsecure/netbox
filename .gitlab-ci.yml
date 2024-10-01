@@ -6,10 +6,10 @@ stages:
 deploy_test:
   stage: deploy
   script:
+    - docker build -t registry.h2hsecure.com/ddos/worker:latest .
     - docker network create web_net || true
     - docker container stop -t 20 ddos || true
     - docker container rm ddos || true
-    - docker build -t registry.h2hsecure.com/ddos/worker:latest .
     - >
       docker run -d
       --restart=always

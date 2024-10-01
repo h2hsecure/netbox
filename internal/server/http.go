@@ -136,5 +136,6 @@ func checkHandler(c *gin.Context) {
 
 	c.SetCookie(COOKIE_NAME, token, 3600, "/", "", true, true)
 	cache.Inc(c, "online-count", 1)
+	cache.Set(c, id.String(), "0")
 	c.Status(http.StatusOK)
 }
