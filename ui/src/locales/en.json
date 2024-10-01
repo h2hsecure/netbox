@@ -1,0 +1,16 @@
+{
+    "drawer": {
+        "title": "Human Verification",
+        "content": "To ensure the security of our platform and protect against automated bots, we need to verify that you are human. Please complete the following verification process by clicking the checkbox below.This step helps us maintain a safe and reliable environment for all users. Once verified, you can continue using our services as usual.Thank you for your understanding and cooperation in helping us keep the platform secure.",
+        "close": "Close The Menu"
+    },
+    "main": {
+        "h1": "Frontier wants to check you are a human",
+        "h2": "After checking your request you will be continue {0}",
+        "check": "Please click that you are a human",
+        "id": "Front Id",
+        "provided": "Provided By {0} {1}",
+        "why": "Why did I see this page?",
+        "more": "Read more"
+    }
+}

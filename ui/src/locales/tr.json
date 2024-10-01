@@ -1,0 +1,16 @@
+{
+    "drawer": {
+        "title": "İnsan Doğrulaması",
+        "content": "Platformumuzun güvenliğini sağlamak ve otomatik botlara karşı koruma sağlamak için insan olduğunuzu doğrulamamız gerekiyor. Lütfen aşağıdaki onay kutusuna tıklayarak doğrulama işlemini tamamlayın.Bu adım, tüm kullanıcılar için güvenli ve güvenilir bir ortam sağlamamıza yardımcı olur. Doğrulama tamamlandıktan sonra hizmetlerimizi her zamanki gibi kullanmaya devam edebilirsiniz.Platformumuzu güvende tutmamıza yardımcı olduğunuz için teşekkür ederiz.",
+        "close": "Menüyü Kapat"
+    },
+    "main": {
+        "h1": "Frontier insan olduğunuzu doğrulamak istiyor",
+        "h2": "Talebinizi kontrol ettikten sonra devam edeceksiniz {0}",
+        "check": "Lütfen insan olduğunuzu onaylamak için tıklayın",
+        "id": "Front Kimliği",
+        "provided": "{0} {1} tarafından sağlandı",
+        "why": "Bu sayfayı neden görüyorum?",
+        "more": "Daha fazla oku"
+    }
+}

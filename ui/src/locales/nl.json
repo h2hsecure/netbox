@@ -1,0 +1,16 @@
+{
+    "drawer": {
+        "title": "Menselijke Verificatie",
+        "content": "Om de veiligheid van ons platform te waarborgen en bescherming te bieden tegen geautomatiseerde bots, moeten we verifiëren dat u een mens bent. Voltooi alstublieft het verificatieproces door op het onderstaande selectievakje te klikken.Deze stap helpt ons een veilige en betrouwbare omgeving voor alle gebruikers te handhaven. Zodra u bent geverifieerd, kunt u onze diensten zoals gewoonlijk blijven gebruiken.Bedankt voor uw begrip en medewerking om ons platform veilig te houden.",
+        "close": "Sluit het menu"
+    },
+    "main": {
+        "h1": "Frontier wil controleren of je een mens bent",
+        "h2": "Na het controleren van je verzoek kun je doorgaan {0}",
+        "check": "Klik alstublieft om te bevestigen dat je een mens bent",
+        "id": "Front-ID",
+        "provided": "Verstrekt door {0} {1}",
+        "why": "Waarom zie ik deze pagina?",
+        "more": "Lees meer"
+    }
+}
