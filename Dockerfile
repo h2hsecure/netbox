@@ -1,4 +1,4 @@
-FROM node:16-alpine AS ui
+FROM node:18-alpine AS ui
 
 COPY . .
 RUN cd ui && npm install && npm run build
@@ -15,8 +15,7 @@ FROM nginx:1.27-alpine
 RUN apk add --update memcached && rm  -rf /tmp/* /var/cache/apk/*
 
 COPY --from=builder /app/ddos /app/ddos
-
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /app/nginx.conf
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
 

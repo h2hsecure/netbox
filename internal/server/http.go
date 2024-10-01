@@ -42,7 +42,7 @@ func CreateHttpServer(port string, memcache ports.Cache) *gin.Engine {
 	mux.StaticFS("/ddos/app/", staticWeb())
 
 	fmt.Printf("Server is running on port %s\n", port)
-	if err := mux.Run(":" + port); err != nil {
+	if err := mux.Run("localhost:" + port); err != nil {
 		log.Err(err).Send()
 	}
 
