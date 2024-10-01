@@ -83,8 +83,7 @@ func authzHandler(c *gin.Context) {
 	last, err := cache.Inc(c, sub, 1)
 
 	if err != nil {
-		log.Warn().Interface("error", err).Send()
-
+		log.Err(err).Msg("cache increment")
 	}
 
 	if last > 100 {
