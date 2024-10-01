@@ -87,6 +87,7 @@ func authzHandler(c *gin.Context) {
 	}
 
 	if last > 100 {
+		c.Writer.Header().Add("Location", "/ddos/app/forbiden")
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
