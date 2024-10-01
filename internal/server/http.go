@@ -3,8 +3,8 @@ package server
 import (
 	"embed"
 	"errors"
-	"fmt"
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 
@@ -44,8 +44,19 @@ func CreateHttpServer(port string, memcache ports.Cache) *gin.Engine {
 	mux.GET("/"+contextPath+"/check", checkHandler)
 	mux.StaticFS("/"+contextPath+"/app/", staticWeb())
 
-	fmt.Printf("Server is running on port %s\n", port)
-	if err := mux.Run("localhost:" + port); err != nil {
+	listener, err := net.Listen("unix", "/app/"+contextPath+".sock")
+	if err != nil {
+		log.Err(err).Msg("listen socket")
+		panic(err)
+	}
+
+	if err := os.Chown("/app/"+contextPath+".sock", 101, 101); err != nil {
+		log.Err(err).Msg("chown socket")
+		panic(err)
+	}
+
+	log.Printf("Server is running on port %v\n", listener)
+	if err := http.Serve(listener, mux); err != nil {
 		log.Err(err).Send()
 	}
 
