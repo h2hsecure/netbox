@@ -5,12 +5,12 @@
         "close": "Close The Menu"
     },
     "main": {
-        "h1": "Frontier wants to check you are a human",
-        "h2": "After checking your request you will be continue {0}",
-        "check": "Please click that you are a human",
+        "h1": "Frontier Wants to Verify You're Human",
+        "h2": "After reviewing your request, you will be able to continue {0}",
+        "check": "Please confirm that you are human",
         "id": "Front Id",
         "provided": "Provided By {0} {1}",
-        "why": "Why did I see this page?",
+        "why": "Why am I seeing this page?",
         "more": "Read more"
     }
 }

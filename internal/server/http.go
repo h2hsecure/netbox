@@ -36,7 +36,8 @@ func staticWeb() http.FileSystem {
 func CreateHttpServer(port string, memcache ports.Cache) *gin.Engine {
 	cache = memcache
 	gin.SetMode(gin.ReleaseMode)
-	mux := gin.Default()
+	mux := gin.New()
+	mux.Use(gin.Recovery())
 	contextPath := os.Getenv("CONTEXT_PATH")
 
 	mux.GET("/"+contextPath+"/auth", authzHandler)
@@ -55,7 +56,7 @@ func authzHandler(c *gin.Context) {
 	log.Info().
 		Interface("header", c.Request.Header).
 		Str("path", c.Request.URL.Path).
-		Msgf("auth request")
+		Send()
 
 	contextPath := os.Getenv("CONTEXT_PATH")
 
@@ -118,7 +119,7 @@ func checkHandler(c *gin.Context) {
 	log.Info().
 		Interface("header", c.Request.Header).
 		Str("path", c.Request.URL.Path).
-		Msgf("check request")
+		Send()
 
 	id, _ := uuid.NewRandom()
 
@@ -146,6 +147,6 @@ func checkHandler(c *gin.Context) {
 
 	c.SetCookie(COOKIE_NAME, token, 3600, "/", "", true, true)
 	cache.Inc(c, "online-count", 1)
-	cache.Set(c, id.String(), "0")
+	cache.Inc(c, id.String(), 1)
 	c.Status(http.StatusOK)
 }
