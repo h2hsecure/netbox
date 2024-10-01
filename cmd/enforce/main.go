@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
-	"git.h2hsecure.com/ddos/waf/internal/server"
 	"github.com/nadoo/ipset"
 	"github.com/otterize/go-procnet/procnet"
 	"github.com/rs/zerolog"
@@ -54,7 +51,7 @@ func main() {
 				}
 
 				for k, v := range ipmap {
-					log.Info().Msgf("ip: %s, count: %d", k, v)
+					log.Printf("ip: %s, count: %d\n", k, v)
 					ipset.Add("myset", k)
 				}
 				time.Sleep(5 * time.Second)
@@ -62,14 +59,9 @@ func main() {
 		}
 	}(ctx)
 
-	go func() {
-		cache := cache.NewMemcache("localhost:11211")
-		server.CreateHttpServer("8081", cache)
-	}()
-
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
-	fmt.Println("Blocking, press ctrl+c to continue...")
+	log.Printf("Blocking, press ctrl+c to continue...\n")
 	<-done
 	cancel()
 

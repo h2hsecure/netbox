@@ -7,5 +7,5 @@ type Cache interface {
 	Set(ctx context.Context, key, value string) error
 
 	Inc(ctx context.Context, key string, delta int) (uint64, error)
-	Dec(ctx context.Context, key string, delta int) error
+	Dec(ctx context.Context, key string, delta int) (uint64, error)
 }

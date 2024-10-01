@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
@@ -47,18 +48,25 @@ func (i *Impl) Get(ctx context.Context, key string) (string, error) {
 func (i *Impl) Inc(ctx context.Context, key string, delta int) (uint64, error) {
 	last, err := i.m.Increment(key, uint64(delta))
 
-	if err != nil {
+	if err != nil && errors.Is(err, memcache.ErrCacheMiss) {
+		i.Set(ctx, key, "0")
+		last = 0
+	} else if err != nil {
 		return 0, fmt.Errorf("memcache-increment: %w", err)
 	}
 
 	return last, nil
 }
-func (i *Impl) Dec(ctx context.Context, key string, delta int) error {
-	_, err := i.m.Decrement(key, uint64(delta))
 
-	if err != nil {
-		return fmt.Errorf("memcache-decrement: %w", err)
+func (i *Impl) Dec(ctx context.Context, key string, delta int) (uint64, error) {
+	last, err := i.m.Decrement(key, uint64(delta))
+
+	if err != nil && errors.Is(err, memcache.ErrCacheMiss) {
+		i.Set(ctx, key, "0")
+		last = 0
+	} else if err != nil {
+		return 0, fmt.Errorf("memcache-decrement: %w", err)
 	}
 
-	return nil
+	return last, nil
 }
