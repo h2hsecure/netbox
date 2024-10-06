@@ -4,10 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/altcha-org/altcha-lib-go"
 )
@@ -25,7 +26,8 @@ func CreateHumanServer() *http.ServeMux {
 	port := getPort()
 	fmt.Printf("Server is running on port %s\n", port)
 	if err := http.ListenAndServe(":"+port, corsMiddleware(mux)); err != nil {
-		log.Fatal(err)
+		log.Err(err).Send()
+		panic(err)
 	}
 
 	return mux

@@ -18,6 +18,7 @@ func CreateToken(sessionCliam domain.SessionCliam) (string, error) {
 		"aud": "user",                           // Audience (user role)
 		"exp": time.Now().Add(time.Hour).Unix(), // Expiration time
 		"iat": time.Now().Unix(),                // Issued at
+		"ip":  sessionCliam.Ip,
 	})
 
 	tokenString, err := claims.SignedString(secretKey)

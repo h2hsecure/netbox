@@ -4,6 +4,7 @@ COPY . .
 RUN cd ui && npm install && npm run build
 
 FROM golang:1.22-alpine AS builder
+RUN apk add --update gcc libc-dev
 WORKDIR '/app'
 COPY go.mod go.sum ./
 RUN go mod download

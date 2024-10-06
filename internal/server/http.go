@@ -1,12 +1,13 @@
 package server
 
 import (
+	"context"
 	"embed"
 	"errors"
 	"io/fs"
-	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
@@ -19,51 +20,55 @@ import (
 
 const COOKIE_NAME = "ddos-cookei"
 
-var cache ports.Cache
-
 //go:embed ui
 var content embed.FS
 
-func staticWeb() http.FileSystem {
+type nginxHandler struct {
+	cache       ports.Cache
+	mq          ports.MessageQueue
+	contextPath string
+	dispatcher  *domain.Dispatcher
+}
+
+type innerJob struct {
+	event domain.UserIpTime
+	mq    ports.MessageQueue
+}
+
+func (i *innerJob) Send() error {
+	return i.mq.Sent(context.Background(), i.event)
+}
+
+func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
+	mux := gin.New()
+	mux.Use(gin.Recovery())
+	contextPath := os.Getenv("CONTEXT_PATH")
+	dispatcher := domain.NewDispatcher(10, 100)
+
+	handler := nginxHandler{
+		cache:       memcache,
+		mq:          messageQueue,
+		contextPath: os.Getenv("CONTEXT_PATH"),
+		dispatcher:  dispatcher,
+	}
+
+	dispatcher.Run()
+
+	mux.GET("/"+contextPath+"/auth", handler.authzHandler)
+	mux.GET("/"+contextPath+"/check", handler.checkHandler)
+
 	dist, err := fs.Sub(content, "ui")
 	if err != nil {
 		log.Err(err).Msg("sub error")
 	}
 
-	return http.FS(dist)
-}
-
-func CreateHttpServer(port string, memcache ports.Cache) *gin.Engine {
-	cache = memcache
-	gin.SetMode(gin.ReleaseMode)
-	mux := gin.New()
-	mux.Use(gin.Recovery())
-	contextPath := os.Getenv("CONTEXT_PATH")
-
-	mux.GET("/"+contextPath+"/auth", authzHandler)
-	mux.GET("/"+contextPath+"/check", checkHandler)
-	mux.StaticFS("/"+contextPath+"/app/", staticWeb())
-
-	listener, err := net.Listen("unix", "/app/"+contextPath+".sock")
-	if err != nil {
-		log.Err(err).Msg("listen socket")
-		panic(err)
-	}
-
-	if err := os.Chown("/app/"+contextPath+".sock", 101, 101); err != nil {
-		log.Err(err).Msg("chown socket")
-		panic(err)
-	}
-
-	log.Printf("Server is running on port %v\n", listener)
-	if err := http.Serve(listener, mux); err != nil {
-		log.Err(err).Send()
-	}
+	mux.StaticFS("/"+contextPath+"/app/", http.FS(dist))
 
 	return mux
 }
 
-func authzHandler(c *gin.Context) {
+func (n *nginxHandler) authzHandler(c *gin.Context) {
 	log.Info().
 		Interface("header", c.Request.Header).
 		Str("path", c.Request.URL.Path).
@@ -80,7 +85,7 @@ func authzHandler(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			c.Writer.Header().Add("Location", "/"+contextPath+"/app/")
+			c.Writer.Header().Add("Location", os.Getenv("DOMAIN")+"/"+contextPath+"/app/")
 			c.Writer.Header().Add("Referer", c.Request.Referer())
 			c.AbortWithStatus(http.StatusUnauthorized)
 		default:
@@ -94,38 +99,58 @@ func authzHandler(c *gin.Context) {
 
 	if err != nil {
 		log.Err(err).Send()
-		c.Writer.Header().Add("Location", "/"+contextPath+"/app/")
+		c.Writer.Header().Add("Location", os.Getenv("DOMAIN")+"/"+contextPath+"/app/")
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
 	sub, _ := t.Claims.GetSubject()
 
-	last, err := cache.Inc(c, sub, 1)
+	last, err := n.cache.Get(c, sub)
 
 	if err != nil {
-		log.Err(err).Msg("cache increment")
+		log.Err(err).Msg("cache get sub")
 	}
 
-	if last > 100 {
-		c.Writer.Header().Add("Location", "/"+contextPath+"/app/forbiden")
+	if last != "" {
+		log.Warn().Str("sub", last).Msg("user found in cache")
+		c.Writer.Header().Add("Location", os.Getenv("DOMAIN")+"/"+contextPath+"/app/forbiden.html")
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
-	// user, err := cache.Get(context.Background(), v.Value)
+	ip := c.Request.Header.Get("X-Real-IP")
 
-	// if user == "" {
-	// 	log.Printf("wrong user: %s %s", user, r.RemoteAddr)
-	// 	w.Header().Add("Location", "/ddos/")
-	// 	w.WriteHeader(http.StatusUnauthorized)
-	// 	return
-	// }
+	if ip == "" {
+		ip = c.RemoteIP()
+	}
+
+	last, err = n.cache.Get(c, ip)
+
+	if err != nil {
+		log.Err(err).Msg("cache get ip")
+	}
+
+	if last != "" {
+		log.Warn().Str("ip", last).Msg("ip found in cache")
+		c.Writer.Header().Add("Location", os.Getenv("DOMAIN")+"/"+contextPath+"/app/forbiden.html")
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
+	n.dispatcher.Push(&innerJob{
+		event: domain.UserIpTime{
+			Ip:        ip,
+			User:      sub,
+			Timestamp: int32(time.Now().Unix()),
+		},
+		mq: n.mq,
+	})
 
 	c.Status(http.StatusOK)
 }
 
-func checkHandler(c *gin.Context) {
+func (n *nginxHandler) checkHandler(c *gin.Context) {
 
 	log.Info().
 		Interface("header", c.Request.Header).
@@ -133,31 +158,12 @@ func checkHandler(c *gin.Context) {
 		Send()
 
 	id, _ := uuid.NewRandom()
+	ip := c.Request.Header.Get("X-Real-Ip")
 
-	token, _ := token.CreateToken(domain.SessionCliam{
-		UserId: id.String(),
-	})
+	token, _ := token.CreateToken(domain.WithDefaultCliam(id.String(), ip))
 
-	// cookie := http.Cookie{
-	// 	Name:     COOKIE_NAME,
-	// 	Value:    token,
-	// 	Path:     "/",
-	// 	MaxAge:   3600,
-	// 	HttpOnly: true,
-	// 	Secure:   true,
-	// 	SameSite: http.SameSiteLaxMode,
-	// }
-
-	//err := cache.Set(context.Background(), id.String(), strings.Split(r.RemoteAddr, ":")[0])
-
-	// if err != nil {
-	// 	log.Err(err).Send()
-	// 	http.Error(w, "server error", http.StatusInternalServerError)
-	// 	return
-	// }
-
-	c.SetCookie(COOKIE_NAME, token, 3600, "/", "", true, true)
-	cache.Inc(c, "online-count", 1)
-	cache.Inc(c, id.String(), 1)
+	c.SetCookie(COOKIE_NAME, token, 3600, "/", os.Getenv("DOMAIN"), false, false)
+	// n.cache.Inc(c, "online-count", 1)
+	// n.cache.Inc(c, id.String(), 1)
 	c.Status(http.StatusOK)
 }

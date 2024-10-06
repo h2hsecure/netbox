@@ -3,8 +3,7 @@ import { createPinia } from 'pinia'
 
 import { createI18n } from 'vue-i18n'
 
-import App from './App.vue'
-import router from './router'
+import ForbidenApp from './ForbidenApp.vue'
 
 import './assets/index.css'
 import en from './locales/en.json'
@@ -18,14 +17,11 @@ const i18n = createI18n({
     en: en,
     tr: tr,
     nl: nl
-  },
-  globalInjection: true,
-  legacy: false
+  }
 })
 
-const app = createApp(App)
+const app = createApp(ForbidenApp)
 
 app.use(createPinia())
-app.use(router)
 app.use(i18n)
 app.mount('#app')

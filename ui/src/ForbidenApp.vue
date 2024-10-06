@@ -1,6 +1,7 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import NotAllowed from './views/NotAllowed.vue'
 import { onMounted } from 'vue'
+
 
 onMounted(() => {
   const availibleLocales = this.$i18n.availableLocales;
@@ -15,7 +16,5 @@ onMounted(() => {
 </script>
 
 <template>
-
-
-  <RouterView />
+  <NotAllowed />
 </template>

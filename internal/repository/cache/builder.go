@@ -4,25 +4,39 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
-	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/rainycape/memcache"
 )
 
 type Impl struct {
 	m *memcache.Client
 }
 
-func NewMemcache(servers ...string) ports.Cache {
-	mc := memcache.New(servers...)
+func NewMemcache(servers ...string) (ports.Cache, error) {
+	mc, err := memcache.New(servers...)
+
+	if err != nil {
+		return nil, fmt.Errorf("memcache client: %w", err)
+	}
+
+	mc.SetMaxIdleConnsPerAddr(10)
+	mc.SetTimeout(3 * time.Second)
 
 	return &Impl{
 		m: mc,
-	}
+	}, nil
 }
 
-func (i *Impl) Set(ctx context.Context, key, value string) error {
-	err := i.m.Set(&memcache.Item{Key: key, Value: []byte(value)})
+func (i *Impl) Set(ctx context.Context, key, value string, duration time.Duration) error {
+	err := i.m.Set(&memcache.Item{Key: key, Value: []byte(value),
+		Expiration: func() int32 {
+			if duration != 0 {
+				return int32(time.Now().Add(duration).Unix())
+			}
+			return 0
+		}()})
 
 	if err != nil {
 		return fmt.Errorf("memcache-set: %w", err)
@@ -49,7 +63,9 @@ func (i *Impl) Inc(ctx context.Context, key string, delta int) (uint64, error) {
 	last, err := i.m.Increment(key, uint64(delta))
 
 	if err != nil && errors.Is(err, memcache.ErrCacheMiss) {
-		i.Set(ctx, key, "0")
+		if err := i.Set(ctx, key, "0", 0); err != nil {
+			return 0, fmt.Errorf("memcache-set: %w", err)
+		}
 		last = 0
 	} else if err != nil {
 		return 0, fmt.Errorf("memcache-increment: %w", err)
@@ -62,7 +78,7 @@ func (i *Impl) Dec(ctx context.Context, key string, delta int) (uint64, error) {
 	last, err := i.m.Decrement(key, uint64(delta))
 
 	if err != nil && errors.Is(err, memcache.ErrCacheMiss) {
-		i.Set(ctx, key, "0")
+		i.Set(ctx, key, "0", 0)
 		last = 0
 	} else if err != nil {
 		return 0, fmt.Errorf("memcache-decrement: %w", err)
