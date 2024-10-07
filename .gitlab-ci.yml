@@ -15,7 +15,11 @@ deploy_test:
       --restart=always
       --network=web_net
       --name=ddos
-      -e BACKEND_HOST=h2hsecurecom -e BACKEND_PORT=80 -e CONTEXT_PATH=ddos -e DOMAIN=https://www.h2hsecure.com
+      -e BACKEND_HOST=h2hsecurecom 
+      -e BACKEND_PORT=80 
+      -e CONTEXT_PATH=ddos 
+      -e DOMAIN=www.h2hsecure.com 
+      -e DOMAIN_PROTO=https
       registry.h2hsecure.com/ddos/worker:latest
 
   tags:

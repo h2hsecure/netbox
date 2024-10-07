@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"errors"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -68,14 +69,20 @@ func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gi
 	return mux
 }
 
+func path(suffix string) string {
+	return fmt.Sprintf("%s://%s/%s/app/%s",
+		os.Getenv("DOMAIN_PROTO"),
+		os.Getenv("DOMAIN"),
+		os.Getenv("CONTEXT_PATH"),
+		suffix)
+}
 func (n *nginxHandler) authzHandler(c *gin.Context) {
 	log.Info().
 		Interface("header", c.Request.Header).
 		Str("path", c.Request.URL.Path).
 		Send()
 
-	contextPath := os.Getenv("CONTEXT_PATH")
-
+	//contextPath := os.Getenv("CONTEXT_PATH")
 	// if strings.HasPrefix(c.Request.URL.Path, "/"+contextPath+"/") {
 	// 	c.Status(http.StatusOK)
 	// 	return
@@ -85,7 +92,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			c.Writer.Header().Add("Location", os.Getenv("DOMAIN")+"/"+contextPath+"/app/")
+			c.Writer.Header().Add("Location", path(""))
 			c.Writer.Header().Add("Referer", c.Request.Referer())
 			c.AbortWithStatus(http.StatusUnauthorized)
 		default:
@@ -99,7 +106,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 
 	if err != nil {
 		log.Err(err).Send()
-		c.Writer.Header().Add("Location", os.Getenv("DOMAIN")+"/"+contextPath+"/app/")
+		c.Writer.Header().Add("Location", path(""))
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
@@ -114,7 +121,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 
 	if last != "" {
 		log.Warn().Str("sub", last).Msg("user found in cache")
-		c.Writer.Header().Add("Location", os.Getenv("DOMAIN")+"/"+contextPath+"/app/forbiden.html")
+		c.Writer.Header().Add("Location", path("forbiden.html"))
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
@@ -133,7 +140,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 
 	if last != "" {
 		log.Warn().Str("ip", last).Msg("ip found in cache")
-		c.Writer.Header().Add("Location", os.Getenv("DOMAIN")+"/"+contextPath+"/app/forbiden.html")
+		c.Writer.Header().Add("Location", path("forbiden.html"))
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
@@ -162,7 +169,7 @@ func (n *nginxHandler) checkHandler(c *gin.Context) {
 
 	token, _ := token.CreateToken(domain.WithDefaultCliam(id.String(), ip))
 
-	c.SetCookie(COOKIE_NAME, token, 3600, "/", os.Getenv("DOMAIN"), false, false)
+	c.SetCookie(COOKIE_NAME, token, 3600, "/", os.Getenv("DOMAIN"), true, false)
 	// n.cache.Inc(c, "online-count", 1)
 	// n.cache.Inc(c, id.String(), 1)
 	c.Status(http.StatusOK)
