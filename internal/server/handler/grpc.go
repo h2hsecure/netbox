@@ -10,6 +10,7 @@ import (
 	client "git.h2hsecure.com/ddos/waf/internal/repository/grpc"
 	"github.com/hashicorp/raft"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -34,6 +35,9 @@ func NewGrpcHandler(
 }
 
 func (s *ServerHandler) Send(ctx context.Context, userIpTime *client.UserIpTime) (*client.Empty, error) {
+	log.Info().
+		Interface("userIpTime", userIpTime).
+		Msg("message get")
 	opsProcessed.WithLabelValues("user", userIpTime.User).Inc()
 	opsProcessed.WithLabelValues("ip", userIpTime.Ip).Inc()
 
