@@ -53,7 +53,7 @@ deploy_test:
       -e DOMAIN=www.h2hsecure.com 
       -e DOMAIN_PROTO=https
       -e CLUSTER_STR=1001:ddos1:45678:12345,1002:ddos2:45678:12345,1003:ddos3:45678:12345
-      -e MY_ADDRESS=1002:ddos3:45678:12345
+      -e MY_ADDRESS=1003:ddos3:45678:12345
       registry.h2hsecure.com/ddos/worker:latest
 
   tags:
