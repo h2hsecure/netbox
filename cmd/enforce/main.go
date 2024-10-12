@@ -73,13 +73,15 @@ func main() {
 
 		grpcServerHandler := handler.NewGrpcHandler(raft)
 
-		log.Info().Msg("Enforce started, press ctrl+c to break it..")
+		log.Info().
+			Str("id", myAddress[0].GetId()).
+			Str("grpc", myAddress[0].GrpcAddress()).
+			Msg("Enforce started")
 
-		if err := server.CreateGrpcServer(os.Getenv("GRPC_SERVER_PORT"), grpcServerHandler); err != nil {
+		if err := server.CreateGrpcServer(myAddress[0], grpcServerHandler); err != nil {
 			errChan <- err
 			return
 		}
-
 	}()
 
 	select {

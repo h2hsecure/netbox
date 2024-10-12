@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	client "git.h2hsecure.com/ddos/waf/internal/repository/grpc"
 	"git.h2hsecure.com/ddos/waf/internal/server/handler"
 
@@ -15,10 +16,12 @@ import (
 	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-func CreateGrpcServer(port string, serverHandler *handler.ServerHandler) error {
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%s", port))
+func CreateGrpcServer(address domain.ConnectionItem, serverHandler *handler.ServerHandler) error {
+	lis, err := net.Listen("tcp", address.GrpcAddress())
 	if err != nil {
-		log.Err(err).Msg("failed to listen")
+		log.Err(err).
+			Str("address", address.GrpcAddress()).
+			Msg("failed to listen")
 		return err
 	}
 
