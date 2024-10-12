@@ -17,7 +17,7 @@ import (
 var serviceConfig = `{
 	"loadBalancingPolicy": "round_robin",
 	"healthCheckConfig": {
-		"serviceName": ""
+		"serviceName": "NetworkEvent"
 	}
 }`
 
@@ -27,7 +27,9 @@ type clientImpl struct {
 
 // Sent implements ports.MessageQueue.
 func (c *clientImpl) Sent(ctx context.Context, event domain.UserIpTime) error {
-	log.Info().Msg("send event client")
+	log.Info().
+		Interface("userIp", event).
+		Msg("send event client")
 	_, err := c.pb.Send(ctx, &UserIpTime{
 		Ip:        event.Ip,
 		User:      event.User,

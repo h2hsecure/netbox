@@ -43,7 +43,7 @@ func main() {
 		}
 
 		if len(address) == 0 {
-			errChan <- fmt.Errorf("no address found for grpc: %s", os.Getenv("MY_ADDRESS"))
+			errChan <- fmt.Errorf("no address found for grpc: %s", os.Getenv("CLUSTER_STR"))
 		}
 
 		mq, err := grpc.NewEnforceClient(address)
