@@ -53,9 +53,10 @@ func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.Connection
 }
 
 func scheduleLeader(r *raft.Raft, myId raft.ServerID) {
-	timer1 := time.NewTimer(30 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
 
-	for range timer1.C {
+	for range ticker.C {
 		if _, id := r.LeaderWithID(); id == myId {
 			futuer := r.LeadershipTransfer()
 
