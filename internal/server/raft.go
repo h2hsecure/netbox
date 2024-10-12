@@ -7,6 +7,7 @@ import (
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/hashicorp/raft"
+	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
 )
 
@@ -42,5 +43,30 @@ func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.Connection
 		return nil, fmt.Errorf("raft.Raft.BootstrapCluster: %w", err)
 	}
 
+	go scheduleLeader(r, raft.ServerID(myAddress.GetId()))
+
+	log.Info().
+		Str("address", myAddress.RaftAddress()).
+		Msg("Raft Cluster Instance started")
+
 	return r, nil
+}
+
+func scheduleLeader(r *raft.Raft, myId raft.ServerID) {
+	timer1 := time.NewTimer(30 * time.Second)
+
+	for range timer1.C {
+		if _, id := r.LeaderWithID(); id == myId {
+			futuer := r.LeadershipTransfer()
+
+			if err := futuer.Error(); err != nil {
+				log.
+					Err(err).
+					Str("id", string(myId)).
+					Msg("leader shift")
+			}
+
+			log.Info().Msg("leadership transfered")
+		}
+	}
 }
