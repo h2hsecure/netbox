@@ -14,12 +14,28 @@ deploy_test:
       docker run -d
       --restart=always
       --network=web_net
-      --name=ddos
+      --name=ddos1
       -e BACKEND_HOST=h2hsecurecom 
       -e BACKEND_PORT=80 
       -e CONTEXT_PATH=ddos 
       -e DOMAIN=www.h2hsecure.com 
       -e DOMAIN_PROTO=https
+      -e CLUSTER_STR=1001:ddos1:45678:12345,1002:ddos2:45678:12345
+      -e MY_ADDRESS=1001:ddos1:45678:12345
+      registry.h2hsecure.com/ddos/worker:latest
+
+    - >
+      docker run -d
+      --restart=always
+      --network=web_net
+      --name=ddos2
+      -e BACKEND_HOST=h2hsecurecom 
+      -e BACKEND_PORT=80 
+      -e CONTEXT_PATH=ddos 
+      -e DOMAIN=www.h2hsecure.com 
+      -e DOMAIN_PROTO=https
+      -e CLUSTER_STR=1001:ddos1:45678:12345,1002:ddos2:45678:12345
+      -e MY_ADDRESS=1002:ddos2:45678:12345
       registry.h2hsecure.com/ddos/worker:latest
 
   tags:

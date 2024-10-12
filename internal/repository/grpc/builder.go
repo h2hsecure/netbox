@@ -41,12 +41,12 @@ func (c *clientImpl) Sent(ctx context.Context, event domain.UserIpTime) error {
 	return nil
 }
 
-func NewEnforceClient(address ...string) (ports.MessageQueue, error) {
+func NewEnforceClient(address []domain.ConnectionItem) (ports.MessageQueue, error) {
 	r := manual.NewBuilderWithScheme("whatever")
 	r.InitialState(resolver.State{
-		Addresses: lo.Map(address, func(item string, _ int) resolver.Address {
+		Addresses: lo.Map(address, func(item domain.ConnectionItem, _ int) resolver.Address {
 			return resolver.Address{
-				Addr: item,
+				Addr: item.GrpcAddress(),
 			}
 		}),
 	})

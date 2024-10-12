@@ -5,18 +5,20 @@ import (
 	"os"
 	"time"
 
+	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/hashicorp/raft"
+	"github.com/samber/lo"
 )
 
-func NewRaft(myID, myAddress string, fsm raft.FSM) (*raft.Raft, error) {
+func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.ConnectionItem, fsm raft.FSM) (*raft.Raft, error) {
 	c := raft.DefaultConfig()
-	c.LocalID = raft.ServerID(myID)
+	c.LocalID = raft.ServerID(myAddress.GetId())
 
 	ldb, sdb := raft.NewInmemStore(), raft.NewInmemStore()
 
 	fss := raft.NewInmemSnapshotStore()
 
-	transport, err := raft.NewTCPTransport(myAddress, nil, 3, 10*time.Second, os.Stderr)
+	transport, err := raft.NewTCPTransport(myAddress.RaftAddress(), nil, 3, 10*time.Second, os.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -27,13 +29,13 @@ func NewRaft(myID, myAddress string, fsm raft.FSM) (*raft.Raft, error) {
 	}
 
 	cfg := raft.Configuration{
-		Servers: []raft.Server{
-			{
+		Servers: lo.Map(clusterAddress, func(item domain.ConnectionItem, _ int) raft.Server {
+			return raft.Server{
 				Suffrage: raft.Voter,
-				ID:       raft.ServerID(myID),
-				Address:  raft.ServerAddress(myAddress),
-			},
-		},
+				ID:       raft.ServerID(item.GetId()),
+				Address:  raft.ServerAddress(item.RaftAddress()),
+			}
+		}),
 	}
 	f := r.BootstrapCluster(cfg)
 	if err := f.Error(); err != nil {

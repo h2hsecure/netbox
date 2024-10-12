@@ -2,9 +2,13 @@
 export CONTEXT_PATH="${CONTEXT_PATH:-ddos}"
 export CACHE_SIZE="${CACHE_SIZE:-256}"
 export PROM_LISTEN="${PROM_LISTEN:-:2112}"
-export CLUSTER_ID=1001
-export MY_ADDRESS=localhost:12345
-export GRPC_SERVER_PORT=45678
+
+#cluster format is host_id:host_name:raft_port:grpc_port
+#comma seprated list of hosts
+export CLUSTER_STR="${CLUSTER_STR:-1001:ddos1:45678:12345}"
+# my format is the same with cluster format
+export MY_ADDRESS="${MY_ADDRESS:-1001:ddos1:45678:12345}"
+
 export BACKEND_HOST="${BACKEND_HOST:-google.com}"
 export BACKEND_PORT="${BACKEND_PORT:-80}"
 export DOMAIN="${DOMAIN:-localhost:8080}"

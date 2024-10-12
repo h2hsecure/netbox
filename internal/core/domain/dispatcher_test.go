@@ -1,6 +1,7 @@
 package domain_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -12,7 +13,7 @@ type testPayload struct {
 	count int
 }
 
-func (t *testPayload) Send() error {
+func (t *testPayload) Send(ctx context.Context) error {
 	log.Info().Msg("test Playload")
 	t.count++
 

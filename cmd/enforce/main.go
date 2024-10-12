@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
 	"git.h2hsecure.com/ddos/waf/internal/repository/fsm"
 	"git.h2hsecure.com/ddos/waf/internal/server"
@@ -42,7 +44,27 @@ func main() {
 
 		machine := fsm.NewStateMachine(cache)
 
-		raft, err := server.NewRaft(os.Getenv("CLUSTER_ID"), os.Getenv("MY_ADDRESS"), machine)
+		clusterAddress, err := domain.ParseAddress(os.Getenv("CLUSTER_STR"))
+
+		if err != nil {
+			errChan <- fmt.Errorf("parse address: %w", err)
+		}
+
+		if len(clusterAddress) == 0 {
+			errChan <- fmt.Errorf("no address found for grpc: %s", os.Getenv("CLUSTER_STR"))
+		}
+
+		myAddress, err := domain.ParseAddress(os.Getenv("MY_ADDRESS"))
+
+		if err != nil {
+			errChan <- fmt.Errorf("parse address: %w", err)
+		}
+
+		if len(clusterAddress) == 0 {
+			errChan <- fmt.Errorf("no address found for grpc: %s", os.Getenv("myAddress"))
+		}
+
+		raft, err := server.NewRaft(myAddress[0], clusterAddress, machine)
 
 		if err != nil {
 			errChan <- err

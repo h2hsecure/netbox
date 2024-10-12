@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
 	"git.h2hsecure.com/ddos/waf/internal/repository/grpc"
 	"git.h2hsecure.com/ddos/waf/internal/server"
@@ -34,7 +36,17 @@ func main() {
 			return
 		}
 
-		mq, err := grpc.NewEnforceClient("localhost:" + os.Getenv("GRPC_SERVER_PORT"))
+		address, err := domain.ParseAddress(os.Getenv("CLUSTER_STR"))
+
+		if err != nil {
+			errChan <- fmt.Errorf("parse address: %w", err)
+		}
+
+		if len(address) == 0 {
+			errChan <- fmt.Errorf("no address found for grpc: %s", os.Getenv("MY_ADDRESS"))
+		}
+
+		mq, err := grpc.NewEnforceClient(address)
 		if err != nil {
 			errChan <- err
 			return
