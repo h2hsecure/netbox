@@ -1,13 +1,18 @@
 #!/bin/sh
 export CONTEXT_PATH="${CONTEXT_PATH:-ddos}"
-export CACHE_SIZE=256
-export CACHE_SOCK=/app/cache.sock
-export INTERNAL_SOCK=/app/ddos.sock
-export PROM_LISTEN=:2112
+export CACHE_SIZE="${CACHE_SIZE:-256}"
+export PROM_LISTEN="${PROM_LISTEN:-:2112}"
 export CLUSTER_ID=1001
 export MY_ADDRESS=localhost:12345
 export GRPC_SERVER_PORT=45678
+export BACKEND_HOST="${BACKEND_HOST:-google.com}"
+export BACKEND_PORT="${BACKEND_HOST:-80}"
+export DOMAIN="${DOMAIN:-localhost:8080}"
+export DOMAIN_PROTO="${DOMAIN_PROTO:-http}"
+export DEFAULT_LOCALE="${DEFAULT_LOCALE:-en}"
 
+export CACHE_SOCK=/app/cache.sock
+export INTERNAL_SOCK=/app/ddos.sock
 
 chown -R nginx:nginx /app
 ls -al /app

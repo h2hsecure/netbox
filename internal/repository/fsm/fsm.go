@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
@@ -14,18 +15,22 @@ import (
 )
 
 type StateMachine struct {
+	mx    *sync.Mutex
 	cache ports.Cache
 }
 
 func NewStateMachine(cache ports.Cache) raft.FSM {
 	return &StateMachine{
 		cache: cache,
+		mx:    &sync.Mutex{},
 	}
 }
 
 // Apply implements raft.FSM.
 func (s *StateMachine) Apply(l *raft.Log) interface{} {
-	log.Info().Interface("raft log", l).Msg("log came")
+	log.Info().
+		Interface("raft log", l).
+		Msg("log came")
 
 	var userIpTime domain.UserIpTime
 	err := json.Unmarshal(l.Data, &userIpTime)
@@ -62,5 +67,13 @@ func (s *StateMachine) Restore(snapshot io.ReadCloser) error {
 // Snapshot implements raft.FSM.
 func (s *StateMachine) Snapshot() (raft.FSMSnapshot, error) {
 	log.Info().Msg("snapshot")
-	return nil, nil
+	return s, nil
+}
+
+func (s *StateMachine) Persist(sink raft.SnapshotSink) error {
+	return nil
+}
+
+func (s *StateMachine) Release() {
+
 }

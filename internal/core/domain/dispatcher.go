@@ -1,26 +1,28 @@
 package domain
 
 import (
+	"context"
+
 	"github.com/rs/zerolog/log"
 )
 
-// Job represents the job to be run
 type Job interface {
-	Send() error
+	Send(context.Context) error
 }
 
-// Worker represents the worker that executes the job
 type worker struct {
 	workerPool chan chan Job
 	jobChannel chan Job
 	quit       chan bool
+	ctx        context.Context
 }
 
 func newWorker(workerPool chan chan Job) worker {
 	return worker{
 		workerPool: workerPool,
 		jobChannel: make(chan Job),
-		quit:       make(chan bool)}
+		quit:       make(chan bool),
+		ctx:        context.Background()}
 }
 
 // Start method starts the run loop for the worker, listening for a quit channel in
@@ -36,7 +38,7 @@ func (w worker) start() {
 			select {
 			case job := <-w.jobChannel:
 				// we have received a work request.
-				if err := job.Send(); err != nil {
+				if err := job.Send(w.ctx); err != nil {
 					log.Err(err).Msg("Error calling Send")
 				}
 
@@ -56,10 +58,8 @@ func (w worker) stop() {
 }
 
 type Dispatcher struct {
-	// A pool of workers channels that are registered with the dispatcher
 	workerPool chan chan Job
 
-	// A buffered channel that we can send work requests on.
 	jobQueue chan Job
 
 	workers []worker
@@ -77,18 +77,15 @@ func (d *Dispatcher) Push(job Job) {
 	default:
 		log.Warn().Msg("Job Channel full. Discarding value")
 	}
-
 }
 
 func (d *Dispatcher) Close() {
-	// starting n number of workers
 	for _, worker := range d.workers {
 		worker.stop()
 	}
 }
 
 func (d *Dispatcher) Run() {
-	// starting n number of workers
 	for i := 0; i < cap(d.workerPool); i++ {
 		worker := newWorker(d.workerPool)
 		worker.start()
@@ -100,13 +97,8 @@ func (d *Dispatcher) Run() {
 
 func (d *Dispatcher) dispatch() {
 	for job := range d.jobQueue {
-		// a job request has been received
 		go func(job Job) {
-			// try to obtain a worker job channel that is available.
-			// this will block until a worker is idle
 			jobChannel := <-d.workerPool
-
-			// dispatch the job to the worker job channel
 			jobChannel <- job
 		}(job)
 	}

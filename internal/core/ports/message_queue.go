@@ -7,5 +7,5 @@ import (
 )
 
 type MessageQueue interface {
-	Sent(ctx context.Context, event domain.UserIpTime) error
+	Sent(context.Context, domain.UserIpTime) error
 }

@@ -36,8 +36,8 @@ type innerJob struct {
 	mq    ports.MessageQueue
 }
 
-func (i *innerJob) Send() error {
-	return i.mq.Sent(context.Background(), i.event)
+func (i *innerJob) Send(ctx context.Context) error {
+	return i.mq.Sent(ctx, i.event)
 }
 
 func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gin.Engine {
