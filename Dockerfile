@@ -25,6 +25,6 @@ RUN chmod +x /run.sh
 
 EXPOSE 80
 
-HEALTHCHECK --start-period=1m --interval=30s CMD curl --fail http://localhost || exit 1
+HEALTHCHECK --start-period=1m --interval=30s CMD curl --fail http://localhost/ddos/health || exit 1
 
 ENTRYPOINT ["sh", "-c", "/run.sh"]

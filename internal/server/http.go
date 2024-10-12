@@ -58,6 +58,7 @@ func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gi
 
 	mux.GET("/"+contextPath+"/auth", handler.authzHandler)
 	mux.GET("/"+contextPath+"/check", handler.checkHandler)
+	mux.GET("/"+contextPath+"/health", handler.healthHandler)
 
 	dist, err := fs.Sub(content, "ui")
 	if err != nil {
@@ -172,5 +173,9 @@ func (n *nginxHandler) checkHandler(c *gin.Context) {
 	c.SetCookie(COOKIE_NAME, token, 3600, "/", os.Getenv("DOMAIN"), true, false)
 	// n.cache.Inc(c, "online-count", 1)
 	// n.cache.Inc(c, id.String(), 1)
+	c.Status(http.StatusOK)
+}
+
+func (n *nginxHandler) healthHandler(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
