@@ -48,6 +48,6 @@ func leaderHealthCheck(serverHandler *handler.ServerHandler, healthCheck *health
 			next = healthgrpc.HealthCheckResponse_SERVING
 		}
 
-		healthCheck.SetServingStatus("", next)
+		healthCheck.SetServingStatus("NetworkEvent", next)
 	}
 }
