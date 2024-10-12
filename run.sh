@@ -29,6 +29,8 @@ umask 0777
 # Start the enforcer
 /app/enforce &
 
+sleep 3
+
 # Start the ddos frontend
 /app/ddos &
 

@@ -56,6 +56,7 @@ func NewEnforceClient(address []domain.ConnectionItem) (ports.MessageQueue, erro
 	options := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithResolvers(r),
+		grpc.WithBlock(),
 		grpc.WithDefaultServiceConfig(serviceConfig),
 	}
 
