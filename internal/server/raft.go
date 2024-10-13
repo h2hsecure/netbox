@@ -44,7 +44,11 @@ func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.Connection
 		return nil, fmt.Errorf("raft.Raft.BootstrapCluster: %w", err)
 	}
 
-	go scheduleLeader(r, raft.ServerID(myAddress.GetId()), clusterAddress)
+	filteredCluster := lo.Filter(clusterAddress, func(item domain.ConnectionItem, _ int) bool {
+		return item.GetId() != string(myAddress.GetId())
+	})
+
+	go scheduleLeader(r, raft.ServerID(myAddress.GetId()), filteredCluster)
 
 	log.Info().
 		Str("address", myAddress.RaftAddress()).
@@ -60,6 +64,7 @@ func scheduleLeader(r *raft.Raft, myId raft.ServerID, cluster []domain.Connectio
 	for range ticker.C {
 		if _, id := r.LeaderWithID(); id == myId {
 			id := rand.Int() % len(cluster)
+
 			futuer := r.LeadershipTransferToServer(raft.ServerID(cluster[id].GetId()), raft.ServerAddress(cluster[id].RaftAddress()))
 
 			if err := futuer.Error(); err != nil {
