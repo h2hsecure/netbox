@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
@@ -20,7 +19,7 @@ func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.Connection
 
 	fss := raft.NewInmemSnapshotStore()
 
-	transport, err := raft.NewTCPTransport(myAddress.RaftAddress(), nil, 3, 10*time.Second, os.Stderr)
+	transport, err := raft.NewTCPTransport(myAddress.RaftAddress(), nil, 3, 10*time.Second, log.Logger)
 	if err != nil {
 		return nil, err
 	}
@@ -68,13 +67,15 @@ func scheduleLeader(r *raft.Raft, myId raft.ServerID, cluster []domain.Connectio
 			futuer := r.LeadershipTransferToServer(raft.ServerID(cluster[id].GetId()), raft.ServerAddress(cluster[id].RaftAddress()))
 
 			if err := futuer.Error(); err != nil {
-				log.
-					Err(err).
+				log.Err(err).
 					Str("id", string(myId)).
 					Msg("leader shift")
 			}
 
-			log.Info().Msg("leadership transfered")
+			log.Info().
+				Interface("to node", cluster[id].RaftAddress()).
+				Interface("id", cluster[id].GetId()).
+				Msg("leadership transfered")
 		}
 	}
 }
