@@ -54,6 +54,8 @@ func main() {
 
 		engine := server.CreateHttpServer(cache, mq)
 
+		syscall.Unlink(os.Getenv("INTERNAL_SOCK"))
+
 		listener, err := net.Listen("unix", os.Getenv("INTERNAL_SOCK"))
 		if err != nil {
 			log.Err(err).Msg("listen socket")
