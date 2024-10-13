@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -43,7 +44,7 @@ func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.Connection
 		return nil, fmt.Errorf("raft.Raft.BootstrapCluster: %w", err)
 	}
 
-	go scheduleLeader(r, raft.ServerID(myAddress.GetId()))
+	go scheduleLeader(r, raft.ServerID(myAddress.GetId()), clusterAddress)
 
 	log.Info().
 		Str("address", myAddress.RaftAddress()).
@@ -52,13 +53,14 @@ func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.Connection
 	return r, nil
 }
 
-func scheduleLeader(r *raft.Raft, myId raft.ServerID) {
+func scheduleLeader(r *raft.Raft, myId raft.ServerID, cluster []domain.ConnectionItem) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
 		if _, id := r.LeaderWithID(); id == myId {
-			futuer := r.LeadershipTransfer()
+			id := rand.Int() % len(cluster)
+			futuer := r.LeadershipTransferToServer(raft.ServerID(cluster[id].GetId()), raft.ServerAddress(cluster[id].RaftAddress()))
 
 			if err := futuer.Error(); err != nil {
 				log.

@@ -78,21 +78,36 @@ func path(suffix string) string {
 		suffix)
 }
 func (n *nginxHandler) authzHandler(c *gin.Context) {
+	now := time.Now()
 	log.Info().
 		Interface("header", c.Request.Header).
+		Time("when", now).
 		Str("path", c.Request.URL.Path).
 		Send()
 
-	//contextPath := os.Getenv("CONTEXT_PATH")
-	// if strings.HasPrefix(c.Request.URL.Path, "/"+contextPath+"/") {
-	// 	c.Status(http.StatusOK)
-	// 	return
-	// }
+		//contextPath := os.Getenv("CONTEXT_PATH")
+		// if strings.HasPrefix(c.Request.URL.Path, "/"+contextPath+"/") {
+		// 	c.Status(http.StatusOK)
+		// 	return
+		// }
+
+	ip := c.Request.Header.Get("X-Real-IP")
+
+	if ip == "" {
+		ip = c.RemoteIP()
+	}
 
 	v, err := c.Cookie(COOKIE_NAME)
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
+			n.dispatcher.Push(&innerJob{
+				event: domain.UserIpTime{
+					Ip:        ip,
+					Timestamp: int32(now.Unix()),
+				},
+				mq: n.mq,
+			})
 			c.Writer.Header().Add("Location", path(""))
 			c.Writer.Header().Add("Referer", c.Request.Referer())
 			c.AbortWithStatus(http.StatusUnauthorized)
@@ -127,12 +142,6 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 		return
 	}
 
-	ip := c.Request.Header.Get("X-Real-IP")
-
-	if ip == "" {
-		ip = c.RemoteIP()
-	}
-
 	last, err = n.cache.Get(c, ip)
 
 	if err != nil {
@@ -150,7 +159,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 		event: domain.UserIpTime{
 			Ip:        ip,
 			User:      sub,
-			Timestamp: int32(time.Now().Unix()),
+			Timestamp: int32(now.Unix()),
 		},
 		mq: n.mq,
 	})
