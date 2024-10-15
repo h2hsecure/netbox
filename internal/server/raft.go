@@ -7,8 +7,16 @@ import (
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/hashicorp/raft"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
+)
+
+var (
+	clusterGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "current_leader",
+		Help: "Current Leader in Cluster",
+	}, []string{"node"})
 )
 
 func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.ConnectionItem, fsm raft.FSM) (*raft.Raft, error) {
@@ -19,7 +27,7 @@ func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.Connection
 
 	fss := raft.NewInmemSnapshotStore()
 
-	transport, err := raft.NewTCPTransport(myAddress.RaftAddress(), nil, 3, 10*time.Second, log.Logger)
+	transport, err := raft.NewTCPTransportWithLogger(myAddress.RaftAddress(), nil, 3, 10*time.Second, &internalLogger{})
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +79,15 @@ func scheduleLeader(r *raft.Raft, myId raft.ServerID, cluster []domain.Connectio
 					Str("id", string(myId)).
 					Msg("leader shift")
 			}
+
+			clusterGauge.WithLabelValues(string(myId)).Set(0)
+			lo.ForEach(cluster, func(item domain.ConnectionItem, i int) {
+				if i == id {
+					clusterGauge.WithLabelValues(item.GetId()).Set(1)
+				} else {
+					clusterGauge.WithLabelValues(item.GetId()).Set(1)
+				}
+			})
 
 			log.Info().
 				Interface("to node", cluster[id].RaftAddress()).

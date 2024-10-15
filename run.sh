@@ -15,6 +15,10 @@ export DOMAIN="${DOMAIN:-localhost:8080}"
 export DOMAIN_PROTO="${DOMAIN_PROTO:-http}"
 export DEFAULT_LOCALE="${DEFAULT_LOCALE:-en}"
 
+export MAX_USER="${MAX_USER:-100}"
+export MAX_IP="${MAX_IP:-100}"
+export MAX_PATH="${MAX_PATH:-100}"
+
 export CACHE_SOCK=/app/cache.sock
 export INTERNAL_SOCK=/app/ddos.sock
 

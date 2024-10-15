@@ -4,7 +4,8 @@ option go_package = "internal/repository/grpc";
 message UserIpTime {
   string ip = 1;
   string user = 2;
-  int32  timestamp = 3;
+  string path = 3;
+  int32  timestamp = 4;
 }
 
 message Empty {

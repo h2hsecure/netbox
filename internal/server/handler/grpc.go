@@ -44,6 +44,7 @@ func (s *ServerHandler) Send(ctx context.Context, userIpTime *client.UserIpTime)
 	buf, err := json.Marshal(domain.UserIpTime{
 		Ip:        userIpTime.Ip,
 		User:      userIpTime.User,
+		Path:      userIpTime.Path,
 		Timestamp: userIpTime.Timestamp,
 	})
 

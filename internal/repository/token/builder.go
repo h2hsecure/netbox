@@ -10,26 +10,32 @@ import (
 
 var secretKey = []byte("your-secret-key")
 
-func CreateToken(sessionCliam domain.SessionCliam) (string, error) {
+func CreateToken(userId, ip string, validDuration time.Duration) (string, error) {
 	// Create a new JWT token with claims
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": sessionCliam.UserId,              // Subject (user identifier)
-		"iss": "ddos-protector",                 // Issuer
-		"aud": "user",                           // Audience (user role)
-		"exp": time.Now().Add(time.Hour).Unix(), // Expiration time
-		"iat": time.Now().Unix(),                // Issued at
-		"ip":  sessionCliam.Ip,
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, domain.SessionClaim{
+		RegisteredClaims: jwt.RegisteredClaims{
+			// A usual scenario is to set the expiration time relative to the current time
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(validDuration * time.Minute)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "ddos-protector",
+			Subject:   userId,
+			ID:        "1",
+			Audience:  []string{"somebody_else"},
+		},
+		UserId: userId,
+		Ip:     ip,
 	})
 
 	tokenString, err := claims.SignedString(secretKey)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("singing token: %w", err)
 	}
 
 	return tokenString, nil
 }
 
-func VerifyToken(tokenString string) (*jwt.Token, error) {
+func VerifyToken(tokenString string) (*domain.SessionClaim, error) {
 	// Parse the token with the secret key
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
@@ -45,6 +51,12 @@ func VerifyToken(tokenString string) (*jwt.Token, error) {
 		return nil, fmt.Errorf("invalid token")
 	}
 
+	sessionClaim, ok := token.Claims.(*domain.SessionClaim)
+
+	if !ok {
+		return nil, fmt.Errorf("unknown claim type")
+	}
+
 	// Return the verified token
-	return token, nil
+	return sessionClaim, nil
 }

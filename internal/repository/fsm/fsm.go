@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -15,14 +17,27 @@ import (
 )
 
 type StateMachine struct {
-	mx    *sync.Mutex
-	cache ports.Cache
+	mx                      *sync.Mutex
+	cache                   ports.Cache
+	maxUser, maxIp, maxPath uint64
 }
 
 func NewStateMachine(cache ports.Cache) raft.FSM {
+	maxUserStr := os.Getenv("MAX_USER")
+	maxUser, _ := strconv.Atoi(maxUserStr)
+
+	maxIpStr := os.Getenv("MAX_IP")
+	maxIp, _ := strconv.Atoi(maxIpStr)
+
+	maxPathStr := os.Getenv("MAX_PATH")
+	maxPath, _ := strconv.Atoi(maxPathStr)
+
 	return &StateMachine{
-		cache: cache,
-		mx:    &sync.Mutex{},
+		cache:   cache,
+		mx:      &sync.Mutex{},
+		maxUser: uint64(maxUser),
+		maxIp:   uint64(maxIp),
+		maxPath: uint64(maxPath),
 	}
 }
 
@@ -44,16 +59,35 @@ func (s *StateMachine) Apply(l *raft.Log) interface{} {
 	count, err := s.cache.Inc(ctx, "c:"+userIpTime.User, 1)
 
 	if err != nil {
-		return fmt.Errorf("cache: %w", err)
+		return fmt.Errorf("cache user: %w", err)
 	}
 
-	if count > 100 {
+	if s.maxUser != 0 && count > s.maxUser {
 		s.cache.Set(ctx, userIpTime.User, "1", 10*time.Second)
 		s.cache.Set(ctx, "c:"+userIpTime.User, "0", 0)
 	}
-	s.cache.Inc(ctx, "c:"+userIpTime.Ip, 1)
 
-	//s.cache.Set(ctx, userIpTime.User, "1")
+	count, err = s.cache.Inc(ctx, "c:"+userIpTime.Ip, 1)
+
+	if err != nil {
+		return fmt.Errorf("cache ip: %w", err)
+	}
+
+	if s.maxIp != 0 && count > s.maxIp {
+		s.cache.Set(ctx, userIpTime.Ip, "1", 10*time.Second)
+		s.cache.Set(ctx, "c:"+userIpTime.Ip, "0", 0)
+	}
+
+	count, err = s.cache.Inc(ctx, "c:"+userIpTime.Path, 1)
+
+	if err != nil {
+		return fmt.Errorf("cache path: %w", err)
+	}
+
+	if s.maxPath != 0 && count > s.maxPath {
+		s.cache.Set(ctx, userIpTime.Path, "1", 10*time.Second)
+		s.cache.Set(ctx, "c:"+userIpTime.Path, "0", 0)
+	}
 
 	return nil
 }

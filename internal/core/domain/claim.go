@@ -1,13 +1,17 @@
 package domain
 
-type SessionCliam struct {
+import "github.com/golang-jwt/jwt/v5"
+
+type SessionClaim struct {
+	jwt.RegisteredClaims
 	UserId string `json:"userId"`
 	Ip     string `json:"ip"`
 }
 
-func WithDefaultCliam(userId, ip string) SessionCliam {
-	return SessionCliam{
-		UserId: userId,
-		Ip:     ip,
+func WithDefaultCliam(userId, ip string, claim jwt.RegisteredClaims) SessionClaim {
+	return SessionClaim{
+		claim,
+		userId,
+		ip,
 	}
 }

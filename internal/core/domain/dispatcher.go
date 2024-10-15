@@ -17,8 +17,8 @@ type worker struct {
 	ctx        context.Context
 }
 
-func newWorker(workerPool chan chan Job) worker {
-	return worker{
+func newWorker(workerPool chan chan Job) *worker {
+	return &worker{
 		workerPool: workerPool,
 		jobChannel: make(chan Job),
 		quit:       make(chan bool),
@@ -27,7 +27,7 @@ func newWorker(workerPool chan chan Job) worker {
 
 // Start method starts the run loop for the worker, listening for a quit channel in
 // case we need to stop it
-func (w worker) start() {
+func (w *worker) start() {
 	go func() {
 		log.Info().Msg("starting worker")
 
@@ -51,7 +51,7 @@ func (w worker) start() {
 }
 
 // Stop signals the worker to stop listening for work requests.
-func (w worker) stop() {
+func (w *worker) stop() {
 	go func() {
 		w.quit <- true
 	}()
@@ -62,7 +62,7 @@ type Dispatcher struct {
 
 	jobQueue chan Job
 
-	workers []worker
+	workers []*worker
 }
 
 func NewDispatcher(maxWorkers, maxQueue int) *Dispatcher {
