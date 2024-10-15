@@ -23,6 +23,8 @@ COPY nginx.conf /app/nginx.conf
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
 
+RUN mkdir -p /logs
+
 EXPOSE 80
 
 HEALTHCHECK --start-period=1m --interval=30s CMD curl --fail http://localhost/ddos/health || exit 1

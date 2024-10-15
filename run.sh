@@ -19,11 +19,12 @@ export MAX_USER="${MAX_USER:-100}"
 export MAX_IP="${MAX_IP:-100}"
 export MAX_PATH="${MAX_PATH:-100}"
 
+export LOG_DIR=/logs
 export CACHE_SOCK=/app/cache.sock
 export INTERNAL_SOCK=/app/ddos.sock
 
 chown -R nginx:nginx /app
-ls -al /app
+chown -R nginx:nginx /logs
 
 umask 0777
 

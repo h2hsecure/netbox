@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
@@ -14,10 +15,16 @@ import (
 	"git.h2hsecure.com/ddos/waf/internal/server/handler"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: &lumberjack.Logger{
+		Filename:   path.Join(os.Getenv("LOG_DIR"), "enforcerß.log"),
+		MaxBackups: 10, // files
+		MaxSize:    5,  // megabytes
+		MaxAge:     10, // days
+	}}).
 		With().
 		Str("context", "encoder").
 		Logger()
