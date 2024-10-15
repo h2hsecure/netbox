@@ -17,7 +17,6 @@ deploy_test:
 
     - >
       docker run -d
-      --rm
       --restart=always
       --network=web_net
       --name=ddos1
@@ -32,7 +31,6 @@ deploy_test:
 
     - >
       docker run -d
-      --rm
       --restart=always
       --network=web_net
       --name=ddos2
@@ -46,7 +44,6 @@ deploy_test:
       registry.h2hsecure.com/ddos/worker:latest
     - >
       docker run -d
-      --rm
       --restart=always
       --network=web_net
       --name=ddos3
