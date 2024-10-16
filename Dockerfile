@@ -18,7 +18,7 @@ RUN apk add --update memcached perl && rm  -rf /tmp/* /var/cache/apk/*
 
 COPY --from=builder /app/ddos /app/ddos
 COPY --from=builder /app/enforce /app/enforce
-COPY --from=builder /app/mgt /app/mgt
+COPY ./tools/mgt /app/mgt
 
 COPY nginx.conf /app/nginx.conf
 COPY run.sh /run.sh
