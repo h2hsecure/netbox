@@ -12,7 +12,7 @@ var secretKey = []byte("your-secret-key")
 
 func CreateToken(userId, ip string, validDuration time.Duration) (string, error) {
 	// Create a new JWT token with claims
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, domain.SessionClaim{
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, &domain.SessionClaim{
 		RegisteredClaims: jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(validDuration * time.Minute)),
@@ -21,7 +21,7 @@ func CreateToken(userId, ip string, validDuration time.Duration) (string, error)
 			Issuer:    "ddos-protector",
 			Subject:   userId,
 			ID:        "1",
-			Audience:  []string{"somebody_else"},
+			Audience:  []string{},
 		},
 		UserId: userId,
 		Ip:     ip,
@@ -37,7 +37,7 @@ func CreateToken(userId, ip string, validDuration time.Duration) (string, error)
 
 func VerifyToken(tokenString string) (*domain.SessionClaim, error) {
 	// Parse the token with the secret key
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &domain.SessionClaim{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 

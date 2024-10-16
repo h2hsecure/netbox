@@ -20,7 +20,7 @@ import (
 
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: &lumberjack.Logger{
-		Filename:   path.Join(os.Getenv("LOG_DIR"), "enforcerß.log"),
+		Filename:   path.Join(os.Getenv("LOG_DIR"), "enforcer.log"),
 		MaxBackups: 10, // files
 		MaxSize:    5,  // megabytes
 		MaxAge:     10, // days

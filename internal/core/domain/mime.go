@@ -13,9 +13,12 @@ var StaticTypesMap = map[string]string{
 var StaticTypes = []string{
 	"css",
 	"js",
-	"jpg jpeg",
+	"jpg",
+	"jpeg",
 	"png",
 	"pdf",
 	"zip",
 	"json",
+	"svg",
+	"gif",
 }
