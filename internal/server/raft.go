@@ -68,7 +68,7 @@ func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.Connection
 }
 
 func scheduleLeader(r *raft.Raft, myId raft.ServerID, cluster []domain.ConnectionItem) {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(30 * time.Minute)
 	defer ticker.Stop()
 
 	for range ticker.C {
