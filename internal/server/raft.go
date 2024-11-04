@@ -20,16 +20,18 @@ var (
 )
 
 func NewRaft(myAddress domain.ConnectionItem, clusterAddress []domain.ConnectionItem, fsm raft.FSM) (*raft.Raft, error) {
+	lg := &internalLogger{
+		log: &log.Logger,
+	}
 	c := raft.DefaultConfig()
 	c.LocalID = raft.ServerID(myAddress.GetId())
+	c.Logger = lg
 
 	ldb, sdb := raft.NewInmemStore(), raft.NewInmemStore()
 
 	fss := raft.NewInmemSnapshotStore()
 
-	transport, err := raft.NewTCPTransportWithLogger(myAddress.RaftAddress(), nil, 3, 10*time.Second, &internalLogger{
-		log: &log.Logger,
-	})
+	transport, err := raft.NewTCPTransportWithLogger(myAddress.RaftAddress(), nil, 3, 10*time.Second, lg)
 
 	if err != nil {
 		return nil, err
