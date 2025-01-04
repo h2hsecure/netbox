@@ -27,7 +27,7 @@ RUN chmod +x /run.sh
 RUN chmod +x /app/mgt
 
 RUN chown -R nginx:nginx /app
-RUN chown - R nginx:nginx /logs
+RUN chown -R nginx:nginx /logs
 RUN chown -R nginx:nginx /var/cache/nginx
 
 RUN touch /var/run/nginx.pid && \
