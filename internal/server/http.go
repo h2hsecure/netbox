@@ -27,10 +27,12 @@ const COOKIE_DURATION = 3600
 var content embed.FS
 
 type nginxHandler struct {
-	cache       ports.Cache
-	mq          ports.MessageQueue
-	contextPath string
-	dispatcher  *domain.Dispatcher
+	cache                   ports.Cache
+	mq                      ports.MessageQueue
+	contextPath             string
+	dispatcher              *domain.Dispatcher
+	disableProcessing       bool
+	enableSearchEngineBoots bool
 }
 
 type innerJob struct {
@@ -56,11 +58,16 @@ func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gi
 	contextPath := os.Getenv("CONTEXT_PATH")
 	dispatcher := domain.NewDispatcher(10, 100)
 
+	_, disableProcessing := os.LookupEnv("DISABLE_PROCESSING")
+	_, enableSearchEngineBoots := os.LookupEnv("ENABLE_SEARCH_ENGINE_BOTS")
+
 	handler := nginxHandler{
-		cache:       memcache,
-		mq:          messageQueue,
-		contextPath: os.Getenv("CONTEXT_PATH"),
-		dispatcher:  dispatcher,
+		cache:                   memcache,
+		mq:                      messageQueue,
+		contextPath:             os.Getenv("CONTEXT_PATH"),
+		dispatcher:              dispatcher,
+		disableProcessing:       disableProcessing,
+		enableSearchEngineBoots: enableSearchEngineBoots,
 	}
 
 	dispatcher.Run()
@@ -89,9 +96,20 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 		}
 	}
 
-	if _, has := os.LookupEnv("DISABLE_PROCESSING"); has {
+	// in some case, we don't want to process our enforcer etc.
+	if n.disableProcessing {
 		c.Status(http.StatusOK)
 		return
+	}
+
+	// allow search engine bots
+	if n.enableSearchEngineBoots {
+		agent := c.Request.Header.Get("user-agent")
+
+		if IsItSearchEngine(agent) {
+			c.Status(http.StatusOK)
+			return
+		}
 	}
 
 	now := time.Now()

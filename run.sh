@@ -19,6 +19,8 @@ export MAX_USER="${MAX_USER:-100}"
 export MAX_IP="${MAX_IP:-100}"
 export MAX_PATH="${MAX_PATH:-100}"
 
+export ENABLE_SEARCH_ENGINE_BOTS="${ENABLE_SEARCH_ENGINE_BOTS:-true}"
+
 export LOG_DIR=/logs
 export CACHE_SOCK=/app/cache.sock
 export INTERNAL_SOCK=/app/ddos.sock

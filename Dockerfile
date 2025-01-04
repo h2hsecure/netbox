@@ -4,7 +4,7 @@ COPY . .
 RUN cd ui && npm install && npm run build
 
 FROM golang:1.22-alpine AS builder
-RUN apk add --update gcc libc-dev
+RUN apk add --update --no-cache gcc libc-dev
 WORKDIR '/app'
 COPY go.mod go.sum ./
 RUN go mod download
@@ -14,7 +14,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ddos ./cmd/ddos
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o enforce ./cmd/enforce
 
 FROM nginx:1.27-alpine
-RUN apk add --update memcached perl && rm  -rf /tmp/* /var/cache/apk/*
+RUN apk add --no-cache memcached perl
 
 COPY --from=builder /app/ddos /app/ddos
 COPY --from=builder /app/enforce /app/enforce
@@ -30,5 +30,7 @@ RUN mkdir -p /logs
 EXPOSE 80
 
 HEALTHCHECK --start-period=1m --interval=30s CMD curl --fail http://localhost/ddos/health || exit 1
+
+USER nginx:nginx
 
 ENTRYPOINT ["sh", "-c", "/run.sh"]
