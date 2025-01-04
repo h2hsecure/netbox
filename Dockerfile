@@ -34,6 +34,9 @@ RUN chown -R nginx:nginx /var/cache/nginx
 RUN touch /var/run/nginx.pid && \
         chown -R nginx:nginx /var/run/nginx.pid /run/nginx.pid
 
+RUN touch /app/nginx.conf && \
+    chown -R nginx:nginx /app/nginx.conf
+
 EXPOSE 80
 
 HEALTHCHECK --start-period=1m --interval=30s CMD curl --fail http://localhost/ddos/health || exit 1
