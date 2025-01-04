@@ -27,6 +27,10 @@ RUN chmod +x /app/mgt
 
 RUN mkdir -p /logs
 
+RUN chown -R nginx:nginx /app
+RUN chown -R nginx:nginx /logs
+RUN chown -R nginx:nginx /var/cache/nginx
+
 EXPOSE 80
 
 HEALTHCHECK --start-period=1m --interval=30s CMD curl --fail http://localhost/ddos/health || exit 1
