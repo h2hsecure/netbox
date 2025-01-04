@@ -14,21 +14,20 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ddos ./cmd/ddos
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o enforce ./cmd/enforce
 
 FROM nginx:1.27-alpine
+RUN rm /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 RUN apk add --no-cache memcached perl
 
 COPY --from=builder /app/ddos /app/ddos
 COPY --from=builder /app/enforce /app/enforce
 COPY ./tools/mgt /app/mgt
 
-COPY nginx.conf /app/nginx.conf
+COPY nginx.conf.temp /app/nginx.conf.temp
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
 RUN chmod +x /app/mgt
 
-RUN mkdir -p /logs
-
 RUN chown -R nginx:nginx /app
-RUN chown -R nginx:nginx /logs
+RUN chown - R nginx:nginx /logs
 RUN chown -R nginx:nginx /var/cache/nginx
 
 RUN touch /var/run/nginx.pid && \

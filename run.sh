@@ -25,9 +25,6 @@ export LOG_DIR=/logs
 export CACHE_SOCK=/app/cache.sock
 export INTERNAL_SOCK=/app/ddos.sock
 
-chown -R nginx:nginx /app
-chown -R nginx:nginx /logs
-
 umask 0777
 
 # start memcached
@@ -41,10 +38,10 @@ sleep 3
 # Start the ddos frontend
 /app/ddos &
 
-envsubst '$INTERNAL_SOCK $CONTEXT_PATH $BACKEND_HOST $BACKEND_PORT' < /app/nginx.conf > /etc/nginx/nginx.conf
+envsubst '$INTERNAL_SOCK $CONTEXT_PATH $BACKEND_HOST $BACKEND_PORT' < /app/nginx.conf.temp > /app/nginx.conf
 
 # Start the reverse proxy
-/usr/sbin/nginx -g "daemon off;" -c /etc/nginx/nginx.conf &
+/usr/sbin/nginx -g "daemon off;" -c /app/nginx.conf &
 
 # Wait for any process to exit
 wait -n
