@@ -204,7 +204,7 @@ func (n *nginxHandler) checkHandler(c *gin.Context) {
 		log.Err(err).Msg("create token")
 	}
 
-	c.SetCookie(COOKIE_NAME, token, COOKIE_DURATION, "/", os.Getenv("DOMAIN"), true, false)
+	c.SetCookie(COOKIE_NAME, token, COOKIE_DURATION, "/", os.Getenv("DOMAIN"), false, false)
 	c.Status(http.StatusOK)
 }
 
