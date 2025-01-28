@@ -54,6 +54,7 @@ http {
 
         location /$CONTEXT_PATH/ {
             proxy_pass http://backend;
+            proxy_buffering off;
             add_header X-Frame-Options "SAMEORIGIN";
         }
 
