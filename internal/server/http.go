@@ -30,9 +30,11 @@ type nginxHandler struct {
 	cache                   ports.Cache
 	mq                      ports.MessageQueue
 	contextPath             string
+	workingDomain           string
 	dispatcher              *domain.Dispatcher
 	disableProcessing       bool
 	enableSearchEngineBoots bool
+	secureCookie            bool
 }
 
 type innerJob struct {
@@ -60,6 +62,7 @@ func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gi
 
 	_, disableProcessing := os.LookupEnv("DISABLE_PROCESSING")
 	_, enableSearchEngineBoots := os.LookupEnv("ENABLE_SEARCH_ENGINE_BOTS")
+	_, enableInsecureCookie := os.LookupEnv("ENABLE_INSECURE_COOCKIE")
 
 	handler := nginxHandler{
 		cache:                   memcache,
@@ -68,6 +71,8 @@ func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gi
 		dispatcher:              dispatcher,
 		disableProcessing:       disableProcessing,
 		enableSearchEngineBoots: enableSearchEngineBoots,
+		secureCookie:            !enableInsecureCookie,
+		workingDomain:           os.Getenv("DOMAIN"),
 	}
 
 	dispatcher.Run()
@@ -204,7 +209,7 @@ func (n *nginxHandler) checkHandler(c *gin.Context) {
 		log.Err(err).Msg("create token")
 	}
 
-	c.SetCookie(COOKIE_NAME, token, COOKIE_DURATION, "/", os.Getenv("DOMAIN"), false, false)
+	c.SetCookie(COOKIE_NAME, token, COOKIE_DURATION, "/", n.workingDomain, n.secureCookie, false)
 	c.Status(http.StatusOK)
 }
 

@@ -25,6 +25,8 @@ export LOG_DIR=/logs
 export CACHE_SOCK=/app/cache.sock
 export INTERNAL_SOCK=/app/ddos.sock
 
+export ENABLE_INSECURE_COOCKIE
+
 umask 0777
 
 # start memcached
