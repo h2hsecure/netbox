@@ -7,6 +7,8 @@ deploy_test:
   stage: deploy
   script:
     - docker build -t registry.h2hsecure.com/ddos/worker:latest .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.h2hsecure.com
+    - docker push registry.h2hsecure.com/ddos/worker:latest
     - docker network create web_net || true
     - docker container stop -t 20 ddos1 || true
     - docker container stop -t 20 ddos2 || true
