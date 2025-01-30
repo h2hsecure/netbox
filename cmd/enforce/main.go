@@ -28,6 +28,10 @@ func main() {
 
 	defer f.Close()
 
+	if err := os.Chmod(logFileName, os.FileMode(0644)); err != nil {
+		panic(fmt.Errorf("chmod failed for log file: %s", logFileName))
+	}
+
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: &lumberjack.Logger{
 		Filename:   logFileName,
 		MaxBackups: 10, // files
