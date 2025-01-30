@@ -1,8 +1,6 @@
 module git.h2hsecure.com/ddos/waf
 
-go 1.22.5
-
-toolchain go1.22.8
+go 1.23.5
 
 require (
 	github.com/hashicorp/go-hclog v1.6.2

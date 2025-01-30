@@ -20,11 +20,20 @@ import (
 )
 
 func main() {
+	logFileName := path.Join(os.Getenv("LOG_DIR"), "ddos.log")
+	f, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		panic(fmt.Errorf("unable to create log file: %s", logFileName))
+	}
+
+	defer f.Close()
+
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: &lumberjack.Logger{
-		Filename:   path.Join(os.Getenv("LOG_DIR"), "ddos.log"),
+		Filename:   logFileName,
 		MaxBackups: 10, // files
 		MaxSize:    5,  // megabytes
 		MaxAge:     10, // days
+		Compress:   true,
 	}}).
 		With().
 		Str("context", "ddos").
