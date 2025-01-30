@@ -20,7 +20,7 @@ import (
 
 func main() {
 
-	logFileName := path.Join(os.Getenv("LOG_DIR"), "ddos.log")
+	logFileName := path.Join(os.Getenv("LOG_DIR"), "enforcer.log")
 	f, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		panic(fmt.Errorf("unable to create log file: %s", logFileName))
@@ -104,5 +104,6 @@ func main() {
 	case <-done:
 	case err := <-errChan:
 		log.Err(err).Msg("startup")
+		os.Exit(1)
 	}
 }

@@ -41,6 +41,8 @@ func main() {
 
 	_, cancel := context.WithCancel(context.Background())
 
+	defer cancel()
+
 	errChan := make(chan error)
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
@@ -103,6 +105,6 @@ func main() {
 		log.Info().Msg("signal recieved")
 	case err := <-errChan:
 		log.Err(err).Send()
+		os.Exit(1)
 	}
-	cancel()
 }
