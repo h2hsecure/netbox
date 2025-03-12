@@ -27,6 +27,8 @@ export INTERNAL_SOCK=/app/ddos.sock
 
 export ENABLE_INSECURE_COOCKIE
 
+export ALTCHA_HMAC_KEY="${ALTCHA_HMAC_KEY:-A123B456C789}"
+
 umask 0777
 
 # start memcached
