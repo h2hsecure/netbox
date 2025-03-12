@@ -14,6 +14,7 @@ import (
 	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
 	"git.h2hsecure.com/ddos/waf/internal/repository/grpc"
 	"git.h2hsecure.com/ddos/waf/internal/server"
+	"git.h2hsecure.com/ddos/waf/internal/server/handler"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -75,6 +76,8 @@ func main() {
 		}
 
 		engine := server.CreateHttpServer(cache, mq)
+
+		handler.NewProbeHandler(engine)
 
 		syscall.Unlink(os.Getenv("INTERNAL_SOCK"))
 
