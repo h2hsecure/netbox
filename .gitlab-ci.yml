@@ -60,5 +60,3 @@ deploy_test:
 
   tags:
     - webcontents
-  only:
-    - master
