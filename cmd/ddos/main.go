@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"path"
 	"syscall"
-	"time"
 
+	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
 	"git.h2hsecure.com/ddos/waf/internal/repository/grpc"
@@ -22,7 +22,13 @@ import (
 )
 
 func main() {
-	logFileName := path.Join(os.Getenv("LOG_DIR"), "ddos.log")
+	cfg, err := cmd.CurrentConfig()
+
+	if err != nil {
+		panic(fmt.Errorf("config builder: %w", err))
+	}
+
+	logFileName := path.Join(cfg.LogDir, "ddos.log")
 	f, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		panic(fmt.Errorf("unable to create log file: %s", logFileName))
@@ -54,20 +60,20 @@ func main() {
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		cache, err := cache.NewMemcache(os.Getenv("CACHE_SOCK"))
+		cache, err := cache.NewMemcache(cfg.Cache.Sock)
 		if err != nil {
 			errChan <- err
 			return
 		}
 
-		address, err := domain.ParseAddress(os.Getenv("CLUSTER_STR"))
+		address, err := domain.ParseAddress(cfg.Enforcer.MyAddress)
 
 		if err != nil {
 			errChan <- fmt.Errorf("parse address: %w", err)
 		}
 
 		if len(address) == 0 {
-			errChan <- fmt.Errorf("no address found for grpc: %s", os.Getenv("CLUSTER_STR"))
+			errChan <- fmt.Errorf("no address found for grpc: %s", cfg.Enforcer.MyAddress)
 		}
 
 		mq, err := grpc.NewEnforceClient(address)
@@ -76,39 +82,35 @@ func main() {
 			return
 		}
 
-		tokenSecret := os.Getenv("TOKEN_SECRET")
-		tokenDuration, err := time.ParseDuration(os.Getenv("TOKEN_DURATION"))
-
-		if err != nil {
-			errChan <- fmt.Errorf("token duration parse: %w", err)
-		}
+		tokenSecret := cfg.User.TokenSecret
+		tokenDuration := cfg.User.TokenDuration
 
 		tokenService := token.NewTokenService(tokenSecret, tokenDuration)
 
-		engine := handler.CreateNginxAdapter(cache, mq, tokenService)
+		engine := handler.CreateNginxAdapter(cache, mq, tokenService, cfg)
 
-		handler.CreateHumanServer(engine, tokenService)
-		handler.NewProbeHandler(engine)
-		if err := handler.NewConfigHandler(engine); err != nil {
+		handler.CreateHumanServer(engine, tokenService, cfg)
+		handler.NewProbeHandler(engine, cfg.Nginx)
+		if err := handler.NewConfigHandler(engine, cfg); err != nil {
 			panic(fmt.Errorf("config handler: %w", err))
 		}
 
-		syscall.Unlink(os.Getenv("INTERNAL_SOCK"))
+		syscall.Unlink(cfg.Nginx.InternalSock)
 
-		listener, err := net.Listen("unix", os.Getenv("INTERNAL_SOCK"))
+		listener, err := net.Listen("unix", cfg.Nginx.InternalSock)
 		if err != nil {
 			log.Err(err).Msg("listen socket")
 			errChan <- err
 			return
 		}
 
-		if err := os.Chown(os.Getenv("INTERNAL_SOCK"), 101, 101); err != nil {
+		if err := os.Chown(cfg.Nginx.InternalSock, 101, 101); err != nil {
 			log.Err(err).Msg("chown socket")
 			errChan <- err
 			return
 		}
 
-		if err := os.Chmod(os.Getenv("INTERNAL_SOCK"), 0644); err != nil {
+		if err := os.Chmod(cfg.Nginx.InternalSock, 0644); err != nil {
 			log.Err(err).Msg("chown socket")
 			errChan <- err
 			return
