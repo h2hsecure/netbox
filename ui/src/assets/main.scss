@@ -1,0 +1,35 @@
+@use "@picocss/pico/scss" with ($semantic-root-element: "#app",
+    $enable-semantic-container: true,
+    $enable-viewport: true,
+    $enable-classes: false,
+    $theme-color: "blue",
+    $modules: ("content/code": false,
+        "forms/input-color": false,
+        "forms/input-date": false,
+        "forms/input-file": false,
+        "forms/input-range": false,
+        "forms/input-search": false,
+        "utilities/accessibility": false,
+        "utilities/reduce-motion": false,
+        "components/accordion": false,
+        "components/card": false,
+        "components/dropdown": false,
+        "components/loading": true,
+        "components/modal": false,
+        "components/nav": false,
+        "components/progress": false,
+        "components/tooltip": false,
+    ));
+
+html, body {
+    height: 100vh;
+    padding-left: 5%;
+    padding-right: 5%;
+}
+footer {
+    text-align: center;
+}
+
+p {
+    --pico-typography-spacing-vertical: 0.1rem;
+}

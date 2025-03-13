@@ -1,4 +1,4 @@
-package server
+package handler
 
 import (
 	"context"
@@ -13,28 +13,26 @@ import (
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
-	"git.h2hsecure.com/ddos/waf/internal/repository/token"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
-const COOKIE_NAME = "ddos-cookei"
-const COOKIE_DURATION = 3600
-
 //go:embed ui
-var content embed.FS
+var uiContent embed.FS
 
 type nginxHandler struct {
 	cache                   ports.Cache
 	mq                      ports.MessageQueue
+	token                   ports.TokenService
 	contextPath             string
 	workingDomain           string
 	dispatcher              *domain.Dispatcher
 	disableProcessing       bool
 	enableSearchEngineBoots bool
 	secureCookie            bool
+	cookieName              string
+	cookieDuration          time.Duration
 }
 
 type innerJob struct {
@@ -53,7 +51,7 @@ func (n *nginxHandler) push(event domain.UserIpTime) {
 	})
 }
 
-func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gin.Engine {
+func CreateNginxAdapter(memcache ports.Cache, messageQueue ports.MessageQueue, tokenService ports.TokenService) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	mux := gin.New()
 	mux.Use(gin.Recovery())
@@ -63,25 +61,33 @@ func CreateHttpServer(memcache ports.Cache, messageQueue ports.MessageQueue) *gi
 	_, disableProcessing := os.LookupEnv("DISABLE_PROCESSING")
 	_, enableSearchEngineBoots := os.LookupEnv("ENABLE_SEARCH_ENGINE_BOTS")
 	_, enableInsecureCookie := os.LookupEnv("ENABLE_INSECURE_COOCKIE")
+	coockieName := os.Getenv("COOKIE_NAME")
+	cookeiDuration, err := time.ParseDuration(os.Getenv("COOKIE_DURATION"))
+
+	if err != nil {
+		panic(fmt.Errorf("coockie duration format: %w", err))
+	}
 
 	handler := nginxHandler{
 		cache:                   memcache,
 		mq:                      messageQueue,
+		token:                   tokenService,
 		contextPath:             os.Getenv("CONTEXT_PATH"),
 		dispatcher:              dispatcher,
 		disableProcessing:       disableProcessing,
 		enableSearchEngineBoots: enableSearchEngineBoots,
 		secureCookie:            !enableInsecureCookie,
 		workingDomain:           os.Getenv("DOMAIN"),
+		cookieName:              coockieName,
+		cookieDuration:          cookeiDuration,
 	}
 
 	dispatcher.Run()
 
 	mux.GET("/"+contextPath+"/auth", handler.authzHandler)
-	mux.GET("/"+contextPath+"/check", handler.checkHandler)
 	mux.GET("/"+contextPath+"/health", handler.healthHandler)
 
-	dist, err := fs.Sub(content, "ui")
+	dist, err := fs.Sub(uiContent, "ui")
 	if err != nil {
 		log.Err(err).Msg("sub error")
 	}
@@ -138,7 +144,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 
 	defer n.push(event)
 
-	v, err := c.Cookie(COOKIE_NAME)
+	v, err := c.Cookie(n.cookieName)
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
@@ -150,7 +156,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 		return
 	}
 
-	t, err := token.VerifyToken(v)
+	t, err := n.token.VerifyToken(v)
 
 	if err != nil {
 		log.Err(err).Send()
@@ -174,7 +180,8 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 
 	if last != "" {
 		log.Warn().Str("sub", last).Msg("user found in cache")
-		redirect(c, "forbiden.html", requestUri, http.StatusForbidden)
+		// ask again for verfying as a human
+		redirect(c, "/index.html", requestUri, http.StatusForbidden)
 		return
 	}
 
@@ -190,26 +197,6 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusOK)
-}
-
-func (n *nginxHandler) checkHandler(c *gin.Context) {
-
-	log.Info().
-		Interface("header", c.Request.Header).
-		Str("path", c.Request.URL.Path).
-		Send()
-
-	id, _ := uuid.NewRandom()
-	ip := c.Request.Header.Get("X-Real-Ip")
-
-	token, err := token.CreateToken(id.String(), ip, time.Duration(COOKIE_DURATION))
-
-	if err != nil {
-		log.Err(err).Msg("create token")
-	}
-
-	c.SetCookie(COOKIE_NAME, token, COOKIE_DURATION, "/", n.workingDomain, n.secureCookie, false)
 	c.Status(http.StatusOK)
 }
 

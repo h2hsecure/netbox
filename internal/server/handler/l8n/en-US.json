@@ -1,0 +1,20 @@
+{
+    "main": {
+        "h1": "Verify you are human by completing the action below.",
+        "h2": "needs to review the security of your connection before proceeding.",
+        "at": {
+            "label": "Please wait while checking...",
+            "error": "Verification failed. Try again later.",
+            "expired": "Verification expired. Try again.",
+            "footer": "Protected by <a href='https://www.h2hsecure.com>h2hsecure.com<a/>'",
+            "verified": "Access Verified",
+            "verifying": "Validating your access...",
+            "waitAlert": "Verifying... please wait."
+        },
+        "timeout": "takes too much time for validating <a href='javascript:window.location.reload()'> please click</a> to refresh page",
+        "footer": {
+            "system": "System ID",
+            "per": "Performance & security by <a href='https://www.h2hsecure.com'>h2hsecure.com</a>"
+        }
+    }
+}

@@ -8,13 +8,14 @@ import (
 )
 
 func Test_TokenValidation(t *testing.T) {
-	tokenstr, err := token.CreateToken("testuserId", "1.1.1.1", time.Duration(3600))
+	ts := token.NewTokenService("testSecret", time.Hour*12)
+	tokenstr, err := ts.CreateToken("testuserId", "1.1.1.1", time.Duration(3600))
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	claim, err := token.VerifyToken(tokenstr)
+	claim, err := ts.VerifyToken(tokenstr)
 
 	if err != nil {
 		t.Fatal(err)
@@ -24,4 +25,7 @@ func Test_TokenValidation(t *testing.T) {
 		t.Fatalf("claim is nil")
 	}
 
+	if claim.Subject != "testuserId" {
+		t.Fatalf("subject is different than %s", "testuserId")
+	}
 }

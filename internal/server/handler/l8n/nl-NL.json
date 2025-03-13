@@ -1,0 +1,20 @@
+{
+    "main": {
+        "h1": "Verifieer dat u een mens bent door de onderstaande actie uit te voeren.",
+        "h2": "Moet de beveiliging van uw verbinding controleren voordat u verdergaat.",
+        "at": {
+            "label": "Even geduld terwijl de controle wordt uitgevoerd...",
+            "error": "Verificatie mislukt. Probeer het later opnieuw.",
+            "expired": "Verificatie verlopen. Probeer het opnieuw.",
+            "footer": "Beschermd door <a href='https://www.h2hsecure.com'>h2hsecure.com</a>",
+            "verified": "Toegang geverifieerd",
+            "verifying": "Uw toegang wordt gevalideerd...",
+            "waitAlert": "Bezig met verifiëren... even geduld."
+        },
+        "timeout": "Het valideren duurt te lang, <a href='javascript:window.location.reload()'> klik </a> om de pagina te vernieuwen.",
+        "footer": {
+            "system": "Systeem-ID",
+            "per": "Prestaties en beveiliging door <a href='https://www.h2hsecure.com'>h2hsecure.com</a>"
+        }
+    }
+}

@@ -1,33 +1,35 @@
-<script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-
-// Importing altcha package will introduce a new element <altcha-widget>
+<script setup lang="ts">
+import { ref, useTemplateRef, onMounted, onUnmounted, watch } from 'vue';
 import   'altcha';
 
-const altchaWidget2 = ref(null);
+const altchaWidget2 = useTemplateRef<HTMLElement>("altchaWidget2");
 const props = defineProps({
   payload: {
     type: String,
     required: false,
   },
   label: {
-    type: String,
+    type: Object,
     required: false,
+    default: () => ({})
   }
 });
-const emit = defineEmits(['update:payload']);
+const emit = defineEmits(['update:payload', 'update:start']);
 const internalValue = ref(props.payload);
 
 watch(internalValue, (v) => {
   emit('update:payload', v || '');
 });
 
-const onStateChange = (ev) => {
+const onStateChange = (ev: Event) => {
   if ('detail' in ev) {
-    const { payload, state } = ev.detail;
+    const { payload, state } = (<CustomEvent>ev).detail;
     if (state === 'verified' && payload) {
       internalValue.value = payload;
     } else {
+      if (state === 'serververification') {
+        emit('update:start');
+      }
       internalValue.value = '';
     }
   }
@@ -54,7 +56,6 @@ onUnmounted(() => {
     style="--altcha-max-width:100%;--altcha-border-width: 0px;"
     hidelogo
     hidefooter
-    auto="onload"
-    strings="{&quot;label&quot;:&quot;{{props.label}}&quot;}"
+    :strings="JSON.stringify(props.label)"
   ></altcha-widget>
 </template>

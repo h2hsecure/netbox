@@ -6,36 +6,54 @@ import (
 	"os"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/repository/token"
+	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 	"github.com/altcha-org/altcha-lib-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
-const COOKIE_NAME = "ddos-cookei"
-const COOKIE_DURATION = 3600
+type humanServer struct {
+	token          ports.TokenService
+	cookieName     string
+	cookieDuration time.Duration
+	hmacKey        string
+	domain         string
+}
 
-var altchaHMACKey = os.Getenv("ALTCHA_HMAC_KEY")
-var workingDomain = os.Getenv("DOMAIN")
-
-func CreateHumanServer(mux *gin.Engine) error {
+func CreateHumanServer(mux *gin.Engine, token ports.TokenService) error {
 	contextPath := os.Getenv("CONTEXT_PATH")
 
-	mux.GET("/"+contextPath+"/challenge", challengeHandler)
-	mux.POST("/"+contextPath+"/accept", acceptHandler)
+	cookieDuration, err := time.ParseDuration(os.Getenv("COOKIE_DURATION"))
+
+	if err != nil {
+		return fmt.Errorf("cookie duration parse: %w", err)
+	}
+
+	hs := humanServer{
+		token:          token,
+		hmacKey:        os.Getenv("CHALLENGE_HMAC_KEY"),
+		domain:         os.Getenv("DOMAIN"),
+		cookieName:     os.Getenv("COOKIE_NAME"),
+		cookieDuration: cookieDuration,
+	}
+
+	mux.Use(corsMiddleware())
+
+	mux.GET("/"+contextPath+"/challenge", hs.challengeHandler)
+	mux.POST("/"+contextPath+"/accept", hs.acceptHandler)
 
 	return nil
 }
 
-func challengeHandler(c *gin.Context) {
+func (h *humanServer) challengeHandler(c *gin.Context) {
 	if c.Request.Method != http.MethodGet {
 		http.Error(c.Writer, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	challenge, err := altcha.CreateChallenge(altcha.ChallengeOptions{
-		HMACKey:   altchaHMACKey,
+		HMACKey:   h.hmacKey,
 		MaxNumber: 50000,
 	})
 	if err != nil {
@@ -46,15 +64,15 @@ func challengeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, challenge)
 }
 
-func acceptHandler(c *gin.Context) {
+func (h *humanServer) acceptHandler(c *gin.Context) {
 	if c.Request.Method != http.MethodPost {
 		http.Error(c.Writer, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	formData := c.Request.FormValue("altcha")
+	formData := c.Request.FormValue("challenge")
 	if formData == "" {
-		http.Error(c.Writer, "Altcha payload missing", http.StatusBadRequest)
+		http.Error(c.Writer, "challenge payload missing", http.StatusBadRequest)
 		return
 	}
 
@@ -72,9 +90,9 @@ func acceptHandler(c *gin.Context) {
 	// 	return
 	//}
 
-	verified, err := altcha.VerifySolution(formData, altchaHMACKey, true)
+	verified, err := altcha.VerifySolution(formData, h.hmacKey, true)
 	if err != nil || !verified {
-		http.Error(c.Writer, "Invalid Altcha payload", http.StatusBadRequest)
+		http.Error(c.Writer, "Invalid challenge payload", http.StatusBadRequest)
 		return
 	}
 
@@ -86,32 +104,17 @@ func acceptHandler(c *gin.Context) {
 	id, _ := uuid.NewRandom()
 	ip := c.Request.Header.Get("X-Real-Ip")
 
-	token, err := token.CreateToken(id.String(), ip, time.Duration(COOKIE_DURATION))
+	token, err := h.token.CreateToken(id.String(), ip, time.Duration(0))
 
 	if err != nil {
 		log.Err(err).Msg("create token")
 	}
 
-	c.SetCookie(COOKIE_NAME, token, COOKIE_DURATION, "/", workingDomain, true, false)
+	c.SetCookie(h.cookieName, token, int(h.cookieDuration), "/", h.domain, true, false)
 	c.Status(http.StatusOK)
 
 	// For demo purposes, echo back the form data
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"success": true,
-	})
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")                   // Allow all origins
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS") // Allow methods
-		w.Header().Set("Access-Control-Allow-Headers", "*")                  // Allow headers
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
 	})
 }

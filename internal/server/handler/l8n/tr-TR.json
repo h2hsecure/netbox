@@ -1,0 +1,20 @@
+{
+    "main": {
+        "h1": "Aşağıdaki işlemi tamamlayarak insan olduğunuzu doğrulayın.",
+        "h2": "Devam etmeden önce bağlantınızın güvenliğini gözden geçirmesi gerekiyor.",
+        "at": {
+            "label": "Kontrol edilirken lütfen bekleyin...",
+            "error": "Doğrulama başarısız. Daha sonra tekrar deneyin.",
+            "expired": "Doğrulamanın süresi doldu. Tekrar deneyin.",
+            "footer": "Koruma sağlanıyor: <a href='https://www.h2hsecure.com'>h2hsecure.com</a>",
+            "verified": "Erişim doğrulandı",
+            "verifying": "Erişiminiz doğrulanıyor...",
+            "waitAlert": "Doğrulama yapılıyor... lütfen bekleyin."
+        },
+        "timeout": "Doğrulama çok uzun sürüyor. sayfayı yenilemek için <a href='javascript:window.location.reload()'> lütfen tıklayın</a> ",
+        "footer": {
+            "system": "Sistem Kimliği",
+            "per": "Performans ve güvenlik tarafından sağlanmaktadır <a href='https://www.h2hsecure.com'>h2hsecure.com</a>"
+        }
+    }
+}

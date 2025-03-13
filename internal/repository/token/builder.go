@@ -5,29 +5,36 @@ import (
 	"time"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
+	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte("your-secret-key")
+type tokenBuilder struct {
+	secretKey            []byte
+	defaultValidDuration time.Duration
+}
 
-func CreateToken(userId, ip string, validDuration time.Duration) (string, error) {
-	// Create a new JWT token with claims
+func NewTokenService(secretKey string, defaultValidDuration time.Duration) ports.TokenService {
+	return &tokenBuilder{
+		defaultValidDuration: defaultValidDuration,
+		secretKey:            []byte(secretKey),
+	}
+}
+
+func (t *tokenBuilder) CreateToken(userId, ip string, validDuration time.Duration) (string, error) {
+
+	if validDuration == 0 {
+		validDuration = t.defaultValidDuration
+	}
+
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, &domain.SessionClaim{
 		RegisteredClaims: jwt.RegisteredClaims{
-			// A usual scenario is to set the expiration time relative to the current time
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(validDuration * time.Minute)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "ddos-protector",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(validDuration)),
 			Subject:   userId,
-			ID:        "1",
-			Audience:  []string{},
 		},
-		UserId: userId,
-		Ip:     ip,
 	})
 
-	tokenString, err := claims.SignedString(secretKey)
+	tokenString, err := claims.SignedString(t.secretKey)
 	if err != nil {
 		return "", fmt.Errorf("singing token: %w", err)
 	}
@@ -35,10 +42,10 @@ func CreateToken(userId, ip string, validDuration time.Duration) (string, error)
 	return tokenString, nil
 }
 
-func VerifyToken(tokenString string) (*domain.SessionClaim, error) {
+func (t *tokenBuilder) VerifyToken(tokenString string) (*domain.SessionClaim, error) {
 	// Parse the token with the secret key
-	token, err := jwt.ParseWithClaims(tokenString, &domain.SessionClaim{}, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+	token, err := jwt.ParseWithClaims(tokenString, &domain.SessionClaim{}, func(token *jwt.Token) (any, error) {
+		return t.secretKey, nil
 	})
 
 	// Check for verification errors

@@ -8,6 +8,7 @@ var StaticTypesMap = map[string]string{
 	"application/pdf":  "pdf",
 	"application/zip":  "zip",
 	"application/json": "json",
+	"image/x-icon":     "ico",
 }
 
 var StaticTypes = []string{
@@ -21,4 +22,5 @@ var StaticTypes = []string{
 	"json",
 	"svg",
 	"gif",
+	"ico",
 }

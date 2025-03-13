@@ -9,11 +9,13 @@ import (
 	"os/signal"
 	"path"
 	"syscall"
+	"time"
 
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
 	"git.h2hsecure.com/ddos/waf/internal/repository/grpc"
-	"git.h2hsecure.com/ddos/waf/internal/server"
+	"git.h2hsecure.com/ddos/waf/internal/repository/token"
+	"git.h2hsecure.com/ddos/waf/internal/server/handler"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -74,7 +76,22 @@ func main() {
 			return
 		}
 
-		engine := server.CreateHttpServer(cache, mq)
+		tokenSecret := os.Getenv("TOKEN_SECRET")
+		tokenDuration, err := time.ParseDuration(os.Getenv("TOKEN_DURATION"))
+
+		if err != nil {
+			errChan <- fmt.Errorf("token duration parse: %w", err)
+		}
+
+		tokenService := token.NewTokenService(tokenSecret, tokenDuration)
+
+		engine := handler.CreateNginxAdapter(cache, mq, tokenService)
+
+		handler.CreateHumanServer(engine, tokenService)
+		handler.NewProbeHandler(engine)
+		if err := handler.NewConfigHandler(engine); err != nil {
+			panic(fmt.Errorf("config handler: %w", err))
+		}
 
 		syscall.Unlink(os.Getenv("INTERNAL_SOCK"))
 

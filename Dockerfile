@@ -9,7 +9,7 @@ WORKDIR '/app'
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . ./
-COPY --from=ui ui/dist internal/server/ui
+COPY --from=ui ui/dist internal/server/handler/ui
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ddos ./cmd/ddos
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o enforce ./cmd/enforce
 

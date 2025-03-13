@@ -25,10 +25,12 @@ deploy_test:
       -e BACKEND_HOST=h2hsecurecom 
       -e BACKEND_PORT=80 
       -e CONTEXT_PATH=ddos 
-      -e DOMAIN=www.h2hsecure.com 
+      -e DOMAIN=web.h2hsecure.com 
       -e DOMAIN_PROTO=https
       -e CLUSTER_STR=1001:ddos1:45678:12345,1002:ddos2:45678:12345,1003:ddos3:45678:12345
       -e MY_ADDRESS=1001:ddos1:45678:12345
+      -e SYSTEM_ID=3e6b0d00-f49f-11ef-9c49-dff0b218ffde-1
+      -e TOKEN_SECRET=02b2648e69c33bac085b
       registry.h2hsecure.com/ddos/worker:latest
 
     - >
@@ -39,10 +41,12 @@ deploy_test:
       -e BACKEND_HOST=h2hsecurecom 
       -e BACKEND_PORT=80 
       -e CONTEXT_PATH=ddos 
-      -e DOMAIN=www.h2hsecure.com 
+      -e DOMAIN=web.h2hsecure.com 
       -e DOMAIN_PROTO=https
       -e CLUSTER_STR=1001:ddos1:45678:12345,1002:ddos2:45678:12345,1003:ddos3:45678:12345
       -e MY_ADDRESS=1002:ddos2:45678:12345
+      -e SYSTEM_ID=3e6b0d00-f49f-11ef-9c49-dff0b218ffde-2
+      -e TOKEN_SECRET=02b2648e69c33bac085b
       registry.h2hsecure.com/ddos/worker:latest
     - >
       docker run -d
@@ -52,10 +56,12 @@ deploy_test:
       -e BACKEND_HOST=h2hsecurecom 
       -e BACKEND_PORT=80 
       -e CONTEXT_PATH=ddos 
-      -e DOMAIN=www.h2hsecure.com 
+      -e DOMAIN=web.h2hsecure.com 
       -e DOMAIN_PROTO=https
       -e CLUSTER_STR=1001:ddos1:45678:12345,1002:ddos2:45678:12345,1003:ddos3:45678:12345
       -e MY_ADDRESS=1003:ddos3:45678:12345
+      -e SYSTEM_ID=3e6b0d00-f49f-11ef-9c49-dff0b218ffde-3
+      -e TOKEN_SECRET=02b2648e69c33bac085b
       registry.h2hsecure.com/ddos/worker:latest
 
   tags:
