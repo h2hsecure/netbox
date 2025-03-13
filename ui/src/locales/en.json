@@ -2,7 +2,7 @@
     "main": {
         "h1": "Frontier Wants to Verify You're Human",
         "h2": "After reviewing your request, you will be able to continue {0}",
-        "check": "Please confirm that you are human",
+        "check": "Please wait while checking...",
         "id": "Front Id",
         "provided": "Provided By {0} {1}",
         "why": "Why am I seeing this page?",

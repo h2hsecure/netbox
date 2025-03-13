@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import Atacha from '../components/Altcha.vue'
+
+const altchaPayload = ref('');
 
 const data = ref({
   checked: false,
@@ -9,8 +12,10 @@ const data = ref({
   showReadme: false
 })
 
-function checkCallback() {
-  axios.get('/ddos/check')
+const checkCallback = () => {
+  var bodyFormData = new FormData();
+  bodyFormData.append('altcha', altchaPayload.value)
+  axios.post('/ddos/accept', bodyFormData)
     .then(function (response) {
       console.log(response);
       window.location = "/"
@@ -48,10 +53,13 @@ function showHideDrawer() {
             data.referer }}</p>
           <div class="mt-10 flex items-center justify-center gap-x-6">
             <div class="flex items-center me-4">
-              <input checked id="red-checkbox" type="checkbox" v-model="data.checked" @click="checkCallback"
-                class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <!-- <input checked id="red-checkbox" type="checkbox" v-model="data.checked" @click="checkCallback"
+                class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"> -->
+                <Atacha v-model:payload="altchaPayload"  id="red-checkbox" @update:payload="checkCallback" 
+                />
               <label for="red-checkbox" class="ms-2 text-sm font-bold"> {{ $t("main.check") }}</label>
             </div>
+
           </div>
         </div>
         <div class="hidden sm:mt-8 sm:flex sm:justify-center">
