@@ -11,3 +11,6 @@ build:
 
 local: build
 	docker run --rm -it --name worker --env-file=local.env -p 8080:80 -p 2112:2112 register.h2hsecure.com/ddos/worker:latest
+
+test: format
+	go test -cover ./...

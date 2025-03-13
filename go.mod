@@ -3,6 +3,7 @@ module git.h2hsecure.com/ddos/waf
 go 1.23.5
 
 require (
+	github.com/caarlos0/env/v11 v11.3.1
 	github.com/hashicorp/go-hclog v1.6.2
 	google.golang.org/grpc v1.67.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

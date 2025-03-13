@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"os"
 	"slices"
 	"strings"
 
+	"git.h2hsecure.com/ddos/waf/cmd"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
 )
@@ -63,8 +63,8 @@ type configHandlerImpl struct {
 	matcher      language.Matcher
 }
 
-func NewConfigHandler(c *gin.Engine) error {
-	contextPath := os.Getenv("CONTEXT_PATH")
+func NewConfigHandler(c *gin.Engine, cfg cmd.ConfigParams) error {
+	contextPath := cfg.Nginx.ContextPath
 
 	chi := configHandlerImpl{
 		tanslations: make(map[string]translation),
@@ -98,11 +98,11 @@ func NewConfigHandler(c *gin.Engine) error {
 	})
 
 	slices.SortFunc(tags, func(a language.Tag, b language.Tag) int {
-		if a.String() == os.Getenv("DEFAULT_LOCALE") {
+		if a.String() == cfg.User.DefaultLocale {
 			return 1
 		}
 
-		if b.String() == os.Getenv("DEFAULT_LOCALE") {
+		if b.String() == cfg.User.DefaultLocale {
 			return -1
 		}
 
@@ -111,9 +111,9 @@ func NewConfigHandler(c *gin.Engine) error {
 
 	chi.matcher = language.NewMatcher(tags)
 	chi.clientConfig = clientConfig{
-		Hostname: os.Getenv("DOMAIN"),
-		SystemId: os.Getenv("SYSTEM_ID"),
-		Logo:     os.Getenv("BACKEND_LOGO"),
+		Hostname: cfg.Nginx.Domain,
+		SystemId: cfg.SystemId,
+		Logo:     cfg.User.BackendLogo,
 	}
 
 	c.GET("/"+contextPath+"/ntb_dds", chi.configHandler)

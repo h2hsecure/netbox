@@ -8,6 +8,7 @@ import (
 	"path"
 	"syscall"
 
+	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
 	"git.h2hsecure.com/ddos/waf/internal/repository/fsm"
@@ -19,8 +20,13 @@ import (
 )
 
 func main() {
+	cfg, err := cmd.CurrentConfig()
 
-	logFileName := path.Join(os.Getenv("LOG_DIR"), "enforcer.log")
+	if err != nil {
+		panic(fmt.Errorf("config builder: %w", err))
+	}
+
+	logFileName := path.Join(cfg.LogDir, "enforcer.log")
 	f, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		panic(fmt.Errorf("unable to create log file: %s", logFileName))
@@ -49,39 +55,39 @@ func main() {
 	go func() {
 		mux := server.CreatePromServer()
 
-		if err := http.ListenAndServe(os.Getenv("PROM_LISTEN"), mux); err != nil {
+		if err := http.ListenAndServe(cfg.PromListener, mux); err != nil {
 			errChan <- err
 		}
 	}()
 
 	go func() {
 
-		cache, err := cache.NewMemcache(os.Getenv("CACHE_SOCK"))
+		cache, err := cache.NewMemcache(cfg.Cache.Sock)
 		if err != nil {
 			errChan <- err
 			return
 		}
 
-		machine := fsm.NewStateMachine(cache)
+		machine := fsm.NewStateMachine(cfg.Cache, cache)
 
-		clusterAddress, err := domain.ParseAddress(os.Getenv("CLUSTER_STR"))
-
-		if err != nil {
-			errChan <- fmt.Errorf("parse address: %w", err)
-		}
-
-		if len(clusterAddress) == 0 {
-			errChan <- fmt.Errorf("no address found for grpc: %s", os.Getenv("CLUSTER_STR"))
-		}
-
-		myAddress, err := domain.ParseAddress(os.Getenv("MY_ADDRESS"))
+		clusterAddress, err := domain.ParseAddress(cfg.Enforcer.ClusterStr)
 
 		if err != nil {
 			errChan <- fmt.Errorf("parse address: %w", err)
 		}
 
 		if len(clusterAddress) == 0 {
-			errChan <- fmt.Errorf("no address found for grpc: %s", os.Getenv("myAddress"))
+			errChan <- fmt.Errorf("no address found for grpc: %s", cfg.Enforcer.ClusterStr)
+		}
+
+		myAddress, err := domain.ParseAddress(cfg.Enforcer.MyAddress)
+
+		if err != nil {
+			errChan <- fmt.Errorf("parse address: %w", err)
+		}
+
+		if len(clusterAddress) == 0 {
+			errChan <- fmt.Errorf("no address found for grpc: %s", cfg.Enforcer.MyAddress)
 		}
 
 		raft, err := server.NewRaft(myAddress[0], clusterAddress, machine)
@@ -107,7 +113,7 @@ func main() {
 	select {
 	case <-done:
 	case err := <-errChan:
-		log.Err(err).Msg("startup")
+		log.Err(err).Msg("startup in enforcer")
 		os.Exit(1)
 	}
 }
