@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
+	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 
@@ -30,9 +30,8 @@ type nginxHandler struct {
 	dispatcher              *domain.Dispatcher
 	disableProcessing       bool
 	enableSearchEngineBoots bool
-	secureCookie            bool
 	cookieName              string
-	cookieDuration          time.Duration
+	basePath                string
 }
 
 type innerJob struct {
@@ -51,48 +50,40 @@ func (n *nginxHandler) push(event domain.UserIpTime) {
 	})
 }
 
-func CreateNginxAdapter(memcache ports.Cache, messageQueue ports.MessageQueue, tokenService ports.TokenService) *gin.Engine {
+func CreateNginxAdapter(memcache ports.Cache, messageQueue ports.MessageQueue, tokenService ports.TokenService, cfg cmd.ConfigParams) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	mux := gin.New()
 	mux.Use(gin.Recovery())
-	contextPath := os.Getenv("CONTEXT_PATH")
 	dispatcher := domain.NewDispatcher(10, 100)
-
-	_, disableProcessing := os.LookupEnv("DISABLE_PROCESSING")
-	_, enableSearchEngineBoots := os.LookupEnv("ENABLE_SEARCH_ENGINE_BOTS")
-	_, enableInsecureCookie := os.LookupEnv("ENABLE_INSECURE_COOCKIE")
-	coockieName := os.Getenv("COOKIE_NAME")
-	cookeiDuration, err := time.ParseDuration(os.Getenv("COOKIE_DURATION"))
-
-	if err != nil {
-		panic(fmt.Errorf("coockie duration format: %w", err))
-	}
 
 	handler := nginxHandler{
 		cache:                   memcache,
 		mq:                      messageQueue,
 		token:                   tokenService,
-		contextPath:             os.Getenv("CONTEXT_PATH"),
+		contextPath:             cfg.Nginx.ContextPath,
 		dispatcher:              dispatcher,
-		disableProcessing:       disableProcessing,
-		enableSearchEngineBoots: enableSearchEngineBoots,
-		secureCookie:            !enableInsecureCookie,
-		workingDomain:           os.Getenv("DOMAIN"),
-		cookieName:              coockieName,
-		cookieDuration:          cookeiDuration,
+		disableProcessing:       cfg.User.DisableProcessing,
+		enableSearchEngineBoots: cfg.User.SearchEngineBots,
+		workingDomain:           cfg.Nginx.BackendHost,
+		cookieName:              cfg.User.CookieName,
+		basePath: fmt.Sprintf("%s://%s/%s/app",
+			cfg.Nginx.DomainProto,
+			cfg.Nginx.Domain,
+			cfg.Nginx.ContextPath),
 	}
 
 	dispatcher.Run()
 
-	mux.GET("/"+contextPath+"/auth", handler.authzHandler)
-	mux.GET("/"+contextPath+"/health", handler.healthHandler)
+	mux.GET("/"+cfg.Nginx.ContextPath+"/auth", handler.authzHandler)
+	mux.GET("/"+cfg.Nginx.ContextPath+"/health", handler.healthHandler)
+	mux.GET("/"+cfg.Nginx.ContextPath+"/waidih", handler.WaidihHandler)
 
 	dist, err := fs.Sub(uiContent, "ui")
 	if err != nil {
 		log.Err(err).Msg("sub error")
 	}
 
-	mux.StaticFS("/"+contextPath+"/app/", http.FS(dist))
+	mux.StaticFS("/"+cfg.Nginx.ContextPath+"/app/", http.FS(dist))
 
 	return mux
 }
@@ -148,7 +139,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			redirect(c, "", requestUri, http.StatusUnauthorized)
+			redirect(c, n.path(""), requestUri, http.StatusUnauthorized)
 		default:
 			log.Err(err).Send()
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -160,14 +151,14 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 
 	if err != nil {
 		log.Err(err).Send()
-		redirect(c, "", requestUri, http.StatusUnauthorized)
+		redirect(c, n.path(""), requestUri, http.StatusUnauthorized)
 		return
 	}
 
 	event.User = t.UserId
 	event.Ip = t.Ip
 
-	if _, has := os.LookupEnv("DISABLE_ENFORCING"); has {
+	if n.disableProcessing {
 		c.Status(http.StatusOK)
 		return
 	}
@@ -181,7 +172,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 	if last != "" {
 		log.Warn().Str("sub", last).Msg("user found in cache")
 		// ask again for verfying as a human
-		redirect(c, "/index.html", requestUri, http.StatusForbidden)
+		redirect(c, n.path("/index.html"), requestUri, http.StatusForbidden)
 		return
 	}
 
@@ -193,7 +184,7 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 
 	if last != "" {
 		log.Warn().Str("ip", last).Msg("ip found in cache")
-		redirect(c, "forbiden.html", requestUri, http.StatusForbidden)
+		redirect(c, n.path("forbiden.html"), requestUri, http.StatusForbidden)
 		return
 	}
 
@@ -204,16 +195,18 @@ func (n *nginxHandler) healthHandler(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+func (n *nginxHandler) WaidihHandler(c *gin.Context) {
+	c.Status(http.StatusOK)
+}
+
 func redirect(c *gin.Context, location, referer string, statusCode int) {
-	c.Writer.Header().Add("Location", path(location))
+	c.Writer.Header().Add("Location", location)
 	c.Writer.Header().Add("Referer", referer)
 	c.AbortWithStatus(statusCode)
 }
 
-func path(suffix string) string {
-	return fmt.Sprintf("%s://%s/%s/app/%s",
-		os.Getenv("DOMAIN_PROTO"),
-		os.Getenv("DOMAIN"),
-		os.Getenv("CONTEXT_PATH"),
+func (n *nginxHandler) path(suffix string) string {
+	return fmt.Sprintf("%s/%s",
+		n.basePath,
 		suffix)
 }

@@ -9,7 +9,7 @@ import (
 
 func Test_TokenValidation(t *testing.T) {
 	ts := token.NewTokenService("testSecret", time.Hour*12)
-	tokenstr, err := ts.CreateToken("testuserId", "1.1.1.1", time.Duration(3600))
+	tokenstr, err := ts.CreateToken("testuserId", "1.1.1.1", time.Duration(36000))
 
 	if err != nil {
 		t.Fatal(err)

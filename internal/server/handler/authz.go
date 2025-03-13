@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 	"github.com/altcha-org/altcha-lib-go"
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ type humanServer struct {
 	domain         string
 }
 
-func CreateHumanServer(mux *gin.Engine, token ports.TokenService) error {
+func CreateHumanServer(mux *gin.Engine, token ports.TokenService, cfg cmd.ConfigParams) error {
 	contextPath := os.Getenv("CONTEXT_PATH")
 
 	cookieDuration, err := time.ParseDuration(os.Getenv("COOKIE_DURATION"))

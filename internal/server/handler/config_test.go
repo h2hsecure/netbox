@@ -1,15 +1,16 @@
 package handler_test
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"strings"
 	"testing"
 
+	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/server/handler"
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
-	"github.com/google/uuid"
 )
 
 func Test_Config_Handler(t *testing.T) {
@@ -18,12 +19,19 @@ func Test_Config_Handler(t *testing.T) {
 	referer := "test_referer"
 
 	os.Setenv("DOMAIN", hostname)
-	os.Setenv("SYSTEM_ID", uuid.NewString())
+	os.Setenv("SYSTEM_ID", "Test123")
 
 	gin.SetMode(gin.ReleaseMode)
 	mux := gin.New()
+	cfg, err := cmd.CurrentConfig()
 
-	err := handler.NewConfigHandler(mux)
+	fmt.Printf("dump config: %v", cfg)
+
+	if err != nil {
+		t.Fatalf("it shouldn't return an error: %v", err)
+	}
+
+	err = handler.NewConfigHandler(mux, cfg)
 
 	if err != nil {
 		t.Fatalf("it shouldn't return an error: %v", err)

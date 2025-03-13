@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"strconv"
 	"sync"
 	"time"
 
+	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 	"github.com/hashicorp/raft"
@@ -22,22 +21,13 @@ type StateMachine struct {
 	maxUser, maxIp, maxPath uint64
 }
 
-func NewStateMachine(cache ports.Cache) raft.FSM {
-	maxUserStr := os.Getenv("MAX_USER")
-	maxUser, _ := strconv.Atoi(maxUserStr)
-
-	maxIpStr := os.Getenv("MAX_IP")
-	maxIp, _ := strconv.Atoi(maxIpStr)
-
-	maxPathStr := os.Getenv("MAX_PATH")
-	maxPath, _ := strconv.Atoi(maxPathStr)
-
+func NewStateMachine(cfg cmd.CacheParams, cache ports.Cache) raft.FSM {
 	return &StateMachine{
 		cache:   cache,
 		mx:      &sync.Mutex{},
-		maxUser: uint64(maxUser),
-		maxIp:   uint64(maxIp),
-		maxPath: uint64(maxPath),
+		maxUser: cfg.MaxUser,
+		maxIp:   cfg.MaxIp,
+		maxPath: cfg.MaxPath,
 	}
 }
 
@@ -48,6 +38,7 @@ func (s *StateMachine) Apply(l *raft.Log) interface{} {
 		Msg("log came")
 
 	var userIpTime domain.UserIpTime
+
 	err := json.Unmarshal(l.Data, &userIpTime)
 
 	if err != nil {
