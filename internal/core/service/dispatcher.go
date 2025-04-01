@@ -1,4 +1,4 @@
-package domain
+package service
 
 import (
 	"context"
@@ -6,9 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Job interface {
-	Send(context.Context) error
-}
+type Job func(context.Context) error
 
 type worker struct {
 	workerPool chan chan Job
@@ -38,7 +36,7 @@ func (w *worker) start() {
 			select {
 			case job := <-w.jobChannel:
 				// we have received a work request.
-				if err := job.Send(w.ctx); err != nil {
+				if err := job(w.ctx); err != nil {
 					log.Err(err).Msg("Error calling Send")
 				}
 
@@ -68,7 +66,9 @@ type Dispatcher struct {
 func NewDispatcher(maxWorkers, maxQueue int) *Dispatcher {
 	pool := make(chan chan Job, maxWorkers)
 	jobQueue := make(chan Job, maxQueue)
-	return &Dispatcher{workerPool: pool, jobQueue: jobQueue}
+	dispatcher := &Dispatcher{workerPool: pool, jobQueue: jobQueue}
+	dispatcher.Run()
+	return dispatcher
 }
 
 func (d *Dispatcher) Push(job Job) {
@@ -86,7 +86,7 @@ func (d *Dispatcher) Close() {
 }
 
 func (d *Dispatcher) Run() {
-	for i := 0; i < cap(d.workerPool); i++ {
+	for range cap(d.workerPool) {
 		worker := newWorker(d.workerPool)
 		worker.start()
 		d.workers = append(d.workers, worker)

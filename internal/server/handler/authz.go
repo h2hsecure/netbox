@@ -3,46 +3,37 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/cmd"
+	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 	"github.com/altcha-org/altcha-lib-go"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
 type humanServer struct {
-	token          ports.TokenService
+	service        ports.Service
 	cookieName     string
 	cookieDuration time.Duration
 	hmacKey        string
 	domain         string
 }
 
-func CreateHumanServer(mux *gin.Engine, token ports.TokenService, cfg cmd.ConfigParams) error {
-	contextPath := os.Getenv("CONTEXT_PATH")
-
-	cookieDuration, err := time.ParseDuration(os.Getenv("COOKIE_DURATION"))
-
-	if err != nil {
-		return fmt.Errorf("cookie duration parse: %w", err)
-	}
+func CreateHumanServer(mux *gin.Engine, serivce ports.Service, cfg domain.ConfigParams) error {
 
 	hs := humanServer{
-		token:          token,
-		hmacKey:        os.Getenv("CHALLENGE_HMAC_KEY"),
-		domain:         os.Getenv("DOMAIN"),
-		cookieName:     os.Getenv("COOKIE_NAME"),
-		cookieDuration: cookieDuration,
+		service:        serivce,
+		hmacKey:        cfg.User.ChallengeHmac,
+		domain:         cfg.Nginx.Domain,
+		cookieName:     cfg.User.CookieName,
+		cookieDuration: cfg.User.CookieDuration,
 	}
 
 	mux.Use(corsMiddleware())
 
-	mux.GET("/"+contextPath+"/challenge", hs.challengeHandler)
-	mux.POST("/"+contextPath+"/accept", hs.acceptHandler)
+	mux.GET("/"+cfg.Nginx.ContextPath+"/challenge", hs.challengeHandler)
+	mux.POST("/"+cfg.Nginx.ContextPath+"/accept", hs.acceptHandler)
 
 	return nil
 }
@@ -77,20 +68,6 @@ func (h *humanServer) acceptHandler(c *gin.Context) {
 		return
 	}
 
-	// Decode the Base64 encoded payload
-	// decodedPayload, err := base64.StdEncoding.DecodeString(formData)
-	// if err != nil {
-	// 	http.Error(c.Writer, "Failed to decode Altcha payload", http.StatusBadRequest)
-	// 	return
-	// }
-
-	// // Unmarshal the JSON payload
-	// var payload map[string]interface{}
-	// if err := json.Unmarshal(decodedPayload, &payload); err != nil {
-	// 	http.Error(c.Writer, "Failed to parse Altcha payload", http.StatusBadRequest)
-	// 	return
-	//}
-
 	verified, err := altcha.VerifySolution(formData, h.hmacKey, true)
 	if err != nil || !verified {
 		http.Error(c.Writer, "Invalid challenge payload", http.StatusBadRequest)
@@ -102,19 +79,22 @@ func (h *humanServer) acceptHandler(c *gin.Context) {
 		Str("path", c.Request.URL.Path).
 		Send()
 
-	id, _ := uuid.NewRandom()
-	ip := c.Request.Header.Get("X-Real-Ip")
-
-	token, err := h.token.CreateToken(id.String(), ip, time.Duration(0))
+	token, err := h.service.OpenSession(c, domain.UserIpTime{
+		Ip:   c.Request.Header.Get("X-Real-Ip"),
+		Path: c.Request.URL.String(),
+	})
 
 	if err != nil {
-		log.Err(err).Msg("create token")
+		log.Err(err).Msg("open session")
+		c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"err":     err.Error(),
+		})
+		return
 	}
 
 	c.SetCookie(h.cookieName, token, int(h.cookieDuration), "/", h.domain, true, false)
-	c.Status(http.StatusOK)
 
-	// For demo purposes, echo back the form data
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"success": true,
 	})

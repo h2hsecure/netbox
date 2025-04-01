@@ -12,9 +12,11 @@ import (
 
 	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
+	"git.h2hsecure.com/ddos/waf/internal/core/service"
 	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
 	"git.h2hsecure.com/ddos/waf/internal/repository/grpc"
 	"git.h2hsecure.com/ddos/waf/internal/repository/token"
+	"git.h2hsecure.com/ddos/waf/internal/server"
 	"git.h2hsecure.com/ddos/waf/internal/server/handler"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -74,6 +76,7 @@ func main() {
 
 		if len(address) == 0 {
 			errChan <- fmt.Errorf("no address found for grpc: %s", cfg.Enforcer.MyAddress)
+			return
 		}
 
 		mq, err := grpc.NewEnforceClient(address)
@@ -87,10 +90,19 @@ func main() {
 
 		tokenService := token.NewTokenService(tokenSecret, tokenDuration)
 
-		engine := handler.CreateNginxAdapter(cache, mq, tokenService, cfg)
+		service, err := service.New(cache, mq, tokenService, nil, cfg)
 
-		handler.CreateHumanServer(engine, tokenService, cfg)
+		if err != nil {
+			errChan <- fmt.Errorf("service init: %w", err)
+			return
+		}
+
+		engine := server.CreateInternalServer(cfg)
+
+		handler.CreateNginxAdapter(engine, service, cfg)
+		handler.CreateHumanServer(engine, service, cfg)
 		handler.NewProbeHandler(engine, cfg.Nginx)
+
 		if err := handler.NewConfigHandler(engine, cfg); err != nil {
 			panic(fmt.Errorf("config handler: %w", err))
 		}

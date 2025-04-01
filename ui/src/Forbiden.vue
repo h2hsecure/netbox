@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import UserValidate from './views/UserValidate.vue'
+import Forbiden from './views/Forbiden.vue'
 
 
 const systemId = computed(() => {
@@ -22,7 +22,7 @@ return window._ntb_dds.t.main.footer.per
     <br /><br /><br />
   </header>
   <main>
-    <UserValidate />
+    <Forbiden />
   </main>  
   <footer>
     <hr />

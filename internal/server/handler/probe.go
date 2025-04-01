@@ -2,9 +2,8 @@ package handler
 
 import (
 	"fmt"
-	"os"
 
-	"git.h2hsecure.com/ddos/waf/cmd"
+	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,15 +35,13 @@ var (
 	`
 )
 
-func NewProbeHandler(c *gin.Engine, cfg cmd.NginxParams) error {
-	contextPath := os.Getenv("CONTEXT_PATH")
-
-	c.GET("/"+contextPath+"/probe.js", probeHandler(cfg))
+func NewProbeHandler(c *gin.Engine, cfg domain.NginxParams) error {
+	c.GET("/"+cfg.ContextPath+"/probe.js", probeHandler(cfg))
 
 	return nil
 }
 
-func probeHandler(cfg cmd.NginxParams) gin.HandlerFunc {
+func probeHandler(cfg domain.NginxParams) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Content-Type", "application/javascript")
 		c.Writer.WriteString(fmt.Sprintf(js_func, "/what_am_i_doing_in_here", 60000))

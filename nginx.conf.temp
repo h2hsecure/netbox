@@ -25,10 +25,10 @@ http {
 
         location / {
             auth_request /$CONTEXT_PATH/auth;
-            auth_request_set $auth_redirect $upstream_http_location;
-            auth_request_set $auth_referer $upstream_http_referer;
-            error_page 401 =200 /$CONTEXT_PATH/app/;
-            error_page 403 =200 /$CONTEXT_PATH/app/;
+            auth_request_set $auth_redirect $sent_http_x_location;
+            auth_request_set $auth_referer $sent_http_x_referer;
+           # error_page 401 =200 /$CONTEXT_PATH/app/index.html;
+            error_page 403 =200 @app;
 
             proxy_pass http://myapp;
             keepalive_timeout 60;
@@ -53,17 +53,19 @@ http {
             proxy_set_header X-Original-URI $request_uri;
         }
 
+        location @app {
+            proxy_pass http://backend/$CONTEXT_PATH/app/$auth_redirect;
+            proxy_buffering off;
+            add_header X-Frame-Options "SAMEORIGIN";
+        }
+
         location /$CONTEXT_PATH/ {
             proxy_pass http://backend;
             proxy_buffering off;
             add_header X-Frame-Options "SAMEORIGIN";
-            proxy_set_header X-Referer $upstream_http_referer;
-            proxy_set_header X-Location $upstream_http_location;
+            proxy_set_header X-Referer $auth_referer;
+            proxy_set_header X-Location $auth_redirect;
         }
-
-#        location /$CONTEXT_PATH/auth_redirect {
-#            return 302 $auth_redirect;
-#        }
     }
 }
 
