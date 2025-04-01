@@ -1,6 +1,7 @@
 package token
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -49,19 +50,24 @@ func (t *tokenBuilder) VerifyToken(tokenString string) (*domain.SessionClaim, er
 	})
 
 	// Check for verification errors
-	if err != nil {
-		return nil, err
+
+	if err != nil && !errors.Is(err, jwt.ErrTokenExpired) && !errors.Is(err, jwt.ErrTokenSignatureInvalid) {
+		return nil, fmt.Errorf("verfiy token: %w", err)
 	}
 
-	// Check if the token is valid
+	// Check if the token is expried
+	if errors.Is(err, jwt.ErrTokenExpired) {
+		return nil, domain.ErrTokenExperied
+	}
+
 	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
+		return nil, domain.ErrTokenInvalid
 	}
 
 	sessionClaim, ok := token.Claims.(*domain.SessionClaim)
 
 	if !ok {
-		return nil, fmt.Errorf("unknown claim type")
+		return nil, fmt.Errorf("wrong claim: %w", domain.ErrTokenInvalid)
 	}
 
 	// Return the verified token

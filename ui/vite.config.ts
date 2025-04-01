@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { resolve } from 'path'
 import vue from '@vitejs/plugin-vue'
 import viteCompress from 'vite-plugin-compression'
 
@@ -37,6 +38,13 @@ export default defineConfig({
   base: '/ddos/app/',
   build: {
     minify: true,
+    rollupOptions: {
+      input: {
+        index: resolve(__dirname, 'index.html'),
+        forbiden: resolve(__dirname, 'forbiden.html'),
+        queue: resolve(__dirname, 'queue.html'),
+            }
+    }
   },
   esbuild: {
     legalComments: 'none'

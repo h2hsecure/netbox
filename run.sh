@@ -53,6 +53,10 @@ envsubst '$INTERNAL_SOCK $CONTEXT_PATH $BACKEND_HOST $BACKEND_PORT' < /app/nginx
 # Start the reverse proxy
 /usr/sbin/nginx -g "daemon off;" -c /app/nginx.conf &
 
+sleep 1 
+
+/usr/bin/tail -f /logs/ddos.log &
+
 # Wait for any process to exit
 wait -n
 

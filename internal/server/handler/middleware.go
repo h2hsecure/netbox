@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 func corsMiddleware() gin.HandlerFunc {
@@ -16,5 +17,15 @@ func corsMiddleware() gin.HandlerFunc {
 			g.Writer.WriteHeader(http.StatusOK)
 			return
 		}
+	})
+}
+
+func loggimgMiddleware() gin.HandlerFunc {
+	return gin.HandlerFunc(func(g *gin.Context) {
+		log.Info().
+			Interface("uri", g.Request.URL).
+			Interface("headers", g.Request.Header).Send()
+		g.Next()
+
 	})
 }

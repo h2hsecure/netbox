@@ -45,7 +45,7 @@ func (s *ServerHandler) Send(ctx context.Context, userIpTime *client.UserIpTime)
 		Ip:        userIpTime.Ip,
 		User:      userIpTime.User,
 		Path:      userIpTime.Path,
-		Timestamp: userIpTime.Timestamp,
+		Timestamp: int64(userIpTime.Timestamp),
 	})
 
 	if err != nil {

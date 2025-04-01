@@ -5,6 +5,8 @@ go 1.23.5
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/hashicorp/go-hclog v1.6.2
+	github.com/onsi/gomega v1.36.2
+	github.com/oschwald/maxminddb-golang/v2 v2.0.0-beta.3
 	google.golang.org/grpc v1.67.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
@@ -12,6 +14,7 @@ require (
 require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
 	github.com/hashicorp/go-msgpack/v2 v2.1.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
@@ -58,9 +61,9 @@ require (
 	golang.org/x/arch v0.10.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.21.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/protobuf v1.36.1
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

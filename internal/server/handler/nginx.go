@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"embed"
 	"errors"
 	"fmt"
@@ -10,82 +9,59 @@ import (
 	"strings"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"github.com/samber/lo"
 )
 
 //go:embed ui
 var uiContent embed.FS
 
 type nginxHandler struct {
-	cache                   ports.Cache
-	mq                      ports.MessageQueue
-	token                   ports.TokenService
+	service                 ports.Service
 	contextPath             string
 	workingDomain           string
-	dispatcher              *domain.Dispatcher
 	disableProcessing       bool
 	enableSearchEngineBoots bool
 	cookieName              string
 	basePath                string
+	locationHeaderKey       string
+	locationHeaderIsSet     bool
 }
 
-type innerJob struct {
-	event domain.UserIpTime
-	mq    ports.MessageQueue
-}
-
-func (i *innerJob) Send(ctx context.Context) error {
-	return i.mq.Sent(ctx, i.event)
-}
-
-func (n *nginxHandler) push(event domain.UserIpTime) {
-	n.dispatcher.Push(&innerJob{
-		event: event,
-		mq:    n.mq,
-	})
-}
-
-func CreateNginxAdapter(memcache ports.Cache, messageQueue ports.MessageQueue, tokenService ports.TokenService, cfg cmd.ConfigParams) *gin.Engine {
-	gin.SetMode(gin.ReleaseMode)
-	mux := gin.New()
-	mux.Use(gin.Recovery())
-	dispatcher := domain.NewDispatcher(10, 100)
+func CreateNginxAdapter(g *gin.Engine, service ports.Service, cfg domain.ConfigParams) error {
 
 	handler := nginxHandler{
-		cache:                   memcache,
-		mq:                      messageQueue,
-		token:                   tokenService,
-		contextPath:             cfg.Nginx.ContextPath,
-		dispatcher:              dispatcher,
-		disableProcessing:       cfg.User.DisableProcessing,
+		service:     service,
+		contextPath: cfg.Nginx.ContextPath,
+
 		enableSearchEngineBoots: cfg.User.SearchEngineBots,
 		workingDomain:           cfg.Nginx.BackendHost,
 		cookieName:              cfg.User.CookieName,
+		locationHeaderKey:       cfg.User.CountryHeader,
+		locationHeaderIsSet:     cfg.User.CountryHeader != "",
 		basePath: fmt.Sprintf("%s://%s/%s/app",
 			cfg.Nginx.DomainProto,
 			cfg.Nginx.Domain,
 			cfg.Nginx.ContextPath),
 	}
 
-	dispatcher.Run()
+	g.GET("/"+cfg.Nginx.ContextPath+"/auth", handler.authzHandler)
+	g.GET("/"+cfg.Nginx.ContextPath+"/health", handler.healthHandler)
+	g.GET("/"+cfg.Nginx.ContextPath+"/waidih", handler.WaidihHandler)
 
-	mux.GET("/"+cfg.Nginx.ContextPath+"/auth", handler.authzHandler)
-	mux.GET("/"+cfg.Nginx.ContextPath+"/health", handler.healthHandler)
-	mux.GET("/"+cfg.Nginx.ContextPath+"/waidih", handler.WaidihHandler)
+	r := g.Use(loggimgMiddleware())
 
 	dist, err := fs.Sub(uiContent, "ui")
 	if err != nil {
 		log.Err(err).Msg("sub error")
 	}
 
-	mux.StaticFS("/"+cfg.Nginx.ContextPath+"/app/", http.FS(dist))
-
-	return mux
+	r.StaticFS("/"+cfg.Nginx.ContextPath+"/app/", http.FS(dist))
+	return nil
 }
 
 func (n *nginxHandler) authzHandler(c *gin.Context) {
@@ -96,12 +72,6 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 			c.Status(http.StatusOK)
 			return
 		}
-	}
-
-	// in some case, we don't want to process our enforcer etc.
-	if n.disableProcessing {
-		c.Status(http.StatusOK)
-		return
 	}
 
 	// allow search engine bots
@@ -127,71 +97,60 @@ func (n *nginxHandler) authzHandler(c *gin.Context) {
 		ip = c.RemoteIP()
 	}
 
-	event := domain.UserIpTime{
-		Ip:        ip,
-		Path:      requestUri,
-		Timestamp: int32(now.Unix()),
+	event := domain.AttemptRequest{
+		UserIpTime: domain.UserIpTime{
+			Ip:        ip,
+			Path:      requestUri,
+			Timestamp: int64(now.Unix()),
+		},
+		Location: nil,
 	}
 
-	defer n.push(event)
+	if n.locationHeaderIsSet {
+		location := c.Request.Header.Get(n.locationHeaderKey)
+
+		if location != "" {
+			event.Location = &location
+		} else {
+			event.Location = lo.ToPtr(string(domain.CountryPolicyAll))
+			log.Warn().
+				Str("header key", n.locationHeaderKey).
+				Msg("location header is not found in request")
+		}
+	}
 
 	v, err := c.Cookie(n.cookieName)
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			redirect(c, n.path(""), requestUri, http.StatusUnauthorized)
+			v = ""
 		default:
 			log.Err(err).Send()
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
-		return
 	}
 
-	t, err := n.token.VerifyToken(v)
+	op := n.service.AccessAtempt(c, v, event)
 
-	if err != nil {
-		log.Err(err).Send()
-		redirect(c, n.path(""), requestUri, http.StatusUnauthorized)
-		return
-	}
-
-	event.User = t.UserId
-	event.Ip = t.Ip
-
-	if n.disableProcessing {
+	log.Info().Msgf("attempt result: %d", op)
+	switch op {
+	case domain.AttemptUserAllow:
 		c.Status(http.StatusOK)
-		return
+	case domain.AttemptDenyUserByCountry:
+		redirect(c, "forbiden.html", requestUri, http.StatusForbidden)
+	case domain.AttemptDenyUserByIp:
+		redirect(c, "forbiden.html", requestUri, http.StatusForbidden)
+	case domain.AttemptValidate:
+		redirect(c, "", requestUri, http.StatusForbidden)
 	}
-
-	last, err := n.cache.Get(c, t.UserId)
-
-	if err != nil {
-		log.Err(err).Msg("cache get sub")
-	}
-
-	if last != "" {
-		log.Warn().Str("sub", last).Msg("user found in cache")
-		// ask again for verfying as a human
-		redirect(c, n.path("/index.html"), requestUri, http.StatusForbidden)
-		return
-	}
-
-	last, err = n.cache.Get(c, t.Ip)
-
-	if err != nil {
-		log.Err(err).Msg("cache get ip")
-	}
-
-	if last != "" {
-		log.Warn().Str("ip", last).Msg("ip found in cache")
-		redirect(c, n.path("forbiden.html"), requestUri, http.StatusForbidden)
-		return
-	}
-
-	c.Status(http.StatusOK)
 }
 
 func (n *nginxHandler) healthHandler(c *gin.Context) {
+	err := n.service.Health(c)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
 	c.Status(http.StatusOK)
 }
 
@@ -200,8 +159,8 @@ func (n *nginxHandler) WaidihHandler(c *gin.Context) {
 }
 
 func redirect(c *gin.Context, location, referer string, statusCode int) {
-	c.Writer.Header().Add("Location", location)
-	c.Writer.Header().Add("Referer", referer)
+	c.Writer.Header().Add("X-Location", location)
+	c.Writer.Header().Add("X-Referer", referer)
 	c.AbortWithStatus(statusCode)
 }
 
