@@ -34,7 +34,7 @@ func (c *clientImpl) Sent(ctx context.Context, event domain.UserIpTime) error {
 	_, err := c.pb.Send(ctx, &UserIpTime{
 		Ip:        event.Ip,
 		User:      event.User,
-		Timestamp: event.Timestamp,
+		Timestamp: int32(event.Timestamp),
 	})
 
 	if err != nil {

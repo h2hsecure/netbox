@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"git.h2hsecure.com/ddos/waf/cmd"
+	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
 )
@@ -63,7 +63,7 @@ type configHandlerImpl struct {
 	matcher      language.Matcher
 }
 
-func NewConfigHandler(c *gin.Engine, cfg cmd.ConfigParams) error {
+func NewConfigHandler(c *gin.Engine, cfg domain.ConfigParams) error {
 	contextPath := cfg.Nginx.ContextPath
 
 	chi := configHandlerImpl{

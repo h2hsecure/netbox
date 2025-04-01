@@ -10,9 +10,9 @@ deploy_test:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.h2hsecure.com
     - docker push registry.h2hsecure.com/ddos/worker:latest
     - docker network create web_net || true
-    - docker container stop -t 20 ddos1 || true
-    - docker container stop -t 20 ddos2 || true
-    - docker container stop -t 20 ddos3 || true
+    - docker container stop -t 3 ddos1 || true
+    - docker container stop -t 3 ddos2 || true
+    - docker container stop -t 3 ddos3 || true
     - docker container rm ddos1 || true
     - docker container rm ddos2 || true
     - docker container rm ddos3 || true
@@ -31,6 +31,8 @@ deploy_test:
       -e MY_ADDRESS=1001:ddos1:45678:12345
       -e SYSTEM_ID=3e6b0d00-f49f-11ef-9c49-dff0b218ffde-1
       -e TOKEN_SECRET=02b2648e69c33bac085b
+      -e COUNTRY_POLICY=*:allow
+      -e COUNTRY_HEADER=X-COUNTRY
       registry.h2hsecure.com/ddos/worker:latest
 
     - >
@@ -47,6 +49,8 @@ deploy_test:
       -e MY_ADDRESS=1002:ddos2:45678:12345
       -e SYSTEM_ID=3e6b0d00-f49f-11ef-9c49-dff0b218ffde-2
       -e TOKEN_SECRET=02b2648e69c33bac085b
+      -e COUNTRY_POLICY=*:allow
+      -e COUNTRY_HEADER=X-COUNTRY
       registry.h2hsecure.com/ddos/worker:latest
     - >
       docker run -d
@@ -62,6 +66,8 @@ deploy_test:
       -e MY_ADDRESS=1003:ddos3:45678:12345
       -e SYSTEM_ID=3e6b0d00-f49f-11ef-9c49-dff0b218ffde-3
       -e TOKEN_SECRET=02b2648e69c33bac085b
+      -e COUNTRY_POLICY=*:allow
+      -e COUNTRY_HEADER=X-COUNTRY
       registry.h2hsecure.com/ddos/worker:latest
 
   tags:

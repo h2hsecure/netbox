@@ -14,3 +14,12 @@ local: build
 
 test: format
 	go test -cover ./...
+
+treetest: format
+	@rm cover.out out.svg || true
+	@go test -coverprofile cover.out ./...
+	@go-cover-treemap -coverprofile cover.out > out.svg
+	@open -a Safari out.svg
+
+audit:
+	govulncheck ./...

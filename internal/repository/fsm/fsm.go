@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/cmd"
 	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 	"github.com/hashicorp/raft"
@@ -21,7 +20,7 @@ type StateMachine struct {
 	maxUser, maxIp, maxPath uint64
 }
 
-func NewStateMachine(cfg cmd.CacheParams, cache ports.Cache) raft.FSM {
+func NewStateMachine(cfg domain.CacheParams, cache ports.Cache) raft.FSM {
 	return &StateMachine{
 		cache:   cache,
 		mx:      &sync.Mutex{},
