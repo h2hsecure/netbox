@@ -1,0 +1,22 @@
+name: Build and push Docker image to github registry
+
+on:
+  push:
+    branches: [ "master" ]
+    
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v4
+
+    - name: Build and Push
+      uses: docker/build-push-action@v5
+      with:
+       context:
+       push: true
+       tags: h2hsecure/netbox:latest
