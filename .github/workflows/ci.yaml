@@ -17,6 +17,6 @@ jobs:
     - name: Build and Push
       uses: docker/build-push-action@v5
       with:
-       context:
-       push: true
-       tags: h2hsecure/netbox:latest
+        context:
+        push: true
+        tags: ghcr.io/h2hsecure/netbox:latest
