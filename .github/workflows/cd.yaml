@@ -27,4 +27,4 @@ jobs:
         context:
         push: true
         
-        tags: ghcr.io/h2hsecure/netbox:latest
+        tags: ghcr.io/h2hsecure/netbox:${{ steps.vars.outputs.sha_short }}
