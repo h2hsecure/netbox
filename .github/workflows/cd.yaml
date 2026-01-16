@@ -2,7 +2,7 @@ name: Build and push Docker image to github registry
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "github_refactoring" ]
     
 jobs:
 
