@@ -44,6 +44,7 @@ func (s *serviceImpl) AccessAtempt(ctx context.Context, token string, event doma
 		case domain.CountryPolicyOperationDeny:
 			op = domain.AttemptDenyUserByCountry
 			return
+		default:
 		}
 	}
 

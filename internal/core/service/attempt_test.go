@@ -124,7 +124,7 @@ func Test_Some_Token(t *testing.T) {
 	},
 	)
 
-	if op != domain.AttemptUserAllow {
+	if op != domain.AttemptValidate {
 		t.Fatalf("it should return alllow rather than: %d", op)
 	}
 }
