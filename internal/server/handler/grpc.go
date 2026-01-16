@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	client "git.h2hsecure.com/ddos/waf/internal/repository/grpc"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	client "github.com/h2hsecure/netbox/internal/repository/grpc"
 	"github.com/hashicorp/raft"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog/log"
@@ -19,8 +19,6 @@ var (
 		Help: "The total number of processed events",
 	}, []string{"user", "ip"})
 )
-
-const system = ""
 
 type ServerHandler struct {
 	client.UnimplementedNetworkEventServer

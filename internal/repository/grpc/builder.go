@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/ports"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
 	grpc "google.golang.org/grpc"
@@ -59,7 +59,6 @@ func NewEnforceClient(address []domain.ConnectionItem) (ports.MessageQueue, erro
 	options := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithResolvers(r),
-		grpc.WithBlock(),
 		grpc.WithDefaultServiceConfig(serviceConfig),
 	}
 

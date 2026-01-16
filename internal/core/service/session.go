@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/google/uuid"
+	"github.com/h2hsecure/netbox/internal/core/domain"
 )
 
 func (s *serviceImpl) OpenSession(ctx context.Context, userIpTime domain.UserIpTime) (string, error) {

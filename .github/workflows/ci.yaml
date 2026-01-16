@@ -2,7 +2,7 @@ name: Build and push Docker image to github registry
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "github_refactoring" ]
     
 jobs:
 
@@ -11,12 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out the repo
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.5'
 
-    - name: Build and Push
-      uses: docker/build-push-action@v5
-      with:
-        context:
-        push: true
-        tags: ghcr.io/h2hsecure/netbox:latest
+      - name: Build & Test
+        run: make audit test

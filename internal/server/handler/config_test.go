@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"git.h2hsecure.com/ddos/waf/cmd"
-	"git.h2hsecure.com/ddos/waf/internal/server/handler"
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
+	"github.com/h2hsecure/netbox/cmd"
+	"github.com/h2hsecure/netbox/internal/server/handler"
 )
 
 func Test_Config_Handler(t *testing.T) {

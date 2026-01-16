@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/google/uuid"
+	"github.com/h2hsecure/netbox/internal/core/domain"
 	. "github.com/onsi/gomega"
 	"github.com/samber/lo"
 )
@@ -93,7 +93,7 @@ func TestNginxAttempt_deny_ip(t *testing.T) {
 func TestNginxAttempt_Validtoken(t *testing.T) {
 	RegisterTestingT(t)
 	userId := uuid.NewString()
-	duration := time.Now().AddDate(100, 0, 0).Sub(time.Now())
+	duration := time.Until(time.Now().AddDate(100, 0, 0))
 	token, err := tokenService.CreateToken(userId, mockUserIpTime.Ip, duration)
 	Expect(err).To(BeNil())
 
@@ -124,7 +124,7 @@ func Test_Some_Token(t *testing.T) {
 	},
 	)
 
-	if op != domain.AttemptUserAllow {
+	if op != domain.AttemptValidate {
 		t.Fatalf("it should return alllow rather than: %d", op)
 	}
 }

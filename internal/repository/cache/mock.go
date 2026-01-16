@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/ports"
 )
 
 var _ ports.Cache = &MockCache{}
@@ -33,7 +33,7 @@ func (m *MockCache) Dec(ctx context.Context, key string, delta int) (uint64, err
 	}
 	intValue -= int64(delta)
 
-	return uint64(intValue), m.Set(ctx, key, strconv.FormatInt(intValue, 0), 0*time.Second)
+	return uint64(intValue), m.Set(ctx, key, strconv.FormatInt(intValue, 10), 0*time.Second)
 }
 
 // Get implements ports.Cache.

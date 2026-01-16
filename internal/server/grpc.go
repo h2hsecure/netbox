@@ -6,9 +6,9 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	client "git.h2hsecure.com/ddos/waf/internal/repository/grpc"
-	"git.h2hsecure.com/ddos/waf/internal/server/handler"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	client "github.com/h2hsecure/netbox/internal/repository/grpc"
+	"github.com/h2hsecure/netbox/internal/server/handler"
 
 	"google.golang.org/grpc"
 

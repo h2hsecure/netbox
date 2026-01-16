@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/caarlos0/env/v11"
+	"github.com/h2hsecure/netbox/internal/core/domain"
 )
 
 func CurrentConfig() (domain.ConfigParams, error) {

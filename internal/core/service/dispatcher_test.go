@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/service"
+	"github.com/h2hsecure/netbox/internal/core/service"
 )
 
 func TestDispatcher(t *testing.T) {
