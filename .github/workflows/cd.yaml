@@ -27,4 +27,4 @@ jobs:
         context:
         push: true
         
-        tags: ghcr.io/h2hsecure/netbox:${{env.GITHUB_SHA::7}}
+        tags: ghcr.io/h2hsecure/netbox:${GITHUB_SHA::7}
