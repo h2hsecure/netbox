@@ -6,9 +6,9 @@ stages:
 deploy_test:
   stage: deploy
   script:
-    - docker build -t registry.h2hsecure.com/ddos/worker:latest .
+    - docker build -t github.com/hekemen/netbox:latest .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.h2hsecure.com
-    - docker push registry.h2hsecure.com/ddos/worker:latest
+    - docker push github.com/hekemen/netbox:latest
     - docker network create web_net || true
     - docker container stop -t 3 ddos1 || true
     - docker container stop -t 3 ddos2 || true
@@ -33,7 +33,7 @@ deploy_test:
       -e TOKEN_SECRET=02b2648e69c33bac085b
       -e COUNTRY_POLICY=*:allow
       -e COUNTRY_HEADER=X-COUNTRY
-      registry.h2hsecure.com/ddos/worker:latest
+      github.com/hekemen/netbox:latest
 
     - >
       docker run -d
@@ -51,7 +51,7 @@ deploy_test:
       -e TOKEN_SECRET=02b2648e69c33bac085b
       -e COUNTRY_POLICY=*:allow
       -e COUNTRY_HEADER=X-COUNTRY
-      registry.h2hsecure.com/ddos/worker:latest
+      github.com/hekemen/netbox:latest
     - >
       docker run -d
       --restart=always
@@ -68,7 +68,7 @@ deploy_test:
       -e TOKEN_SECRET=02b2648e69c33bac085b
       -e COUNTRY_POLICY=*:allow
       -e COUNTRY_HEADER=X-COUNTRY
-      registry.h2hsecure.com/ddos/worker:latest
+      github.com/hekemen/netbox:latest
 
   tags:
     - webcontents

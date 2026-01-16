@@ -3,7 +3,7 @@ package cmd_test
 import (
 	"testing"
 
-	"git.h2hsecure.com/ddos/waf/cmd"
+	"github.com/h2hsecure/netbox/cmd"
 )
 
 func TestConfigurationParse(t *testing.T) {

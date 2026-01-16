@@ -6,8 +6,8 @@ import (
 
 	"net/netip"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/ports"
 	"github.com/oschwald/maxminddb-golang/v2"
 	"github.com/rs/zerolog/log"
 )

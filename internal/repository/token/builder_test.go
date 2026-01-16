@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	"git.h2hsecure.com/ddos/waf/internal/repository/token"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/repository/token"
 )
 
 const wrong_token_str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoyNjg5MzM0NTI0fQ.vhfyD_Hx7PSf-IavHnfJvCK27A3m_StLRsO08k7FVfo"

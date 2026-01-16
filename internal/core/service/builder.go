@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/ports"
 )
 
 type serviceImpl struct {

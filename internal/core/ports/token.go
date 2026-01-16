@@ -3,7 +3,7 @@ package ports
 import (
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/domain"
 )
 
 type TokenService interface {

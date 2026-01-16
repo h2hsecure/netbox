@@ -1,8 +1,8 @@
 package server
 
 import (
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/gin-gonic/gin"
+	"github.com/h2hsecure/netbox/internal/core/domain"
 )
 
 func CreateInternalServer(cfg domain.ConfigParams) *gin.Engine {

@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/cmd"
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
-	"git.h2hsecure.com/ddos/waf/internal/core/service"
-	"git.h2hsecure.com/ddos/waf/internal/repository/cache"
-	"git.h2hsecure.com/ddos/waf/internal/repository/grpc"
-	"git.h2hsecure.com/ddos/waf/internal/repository/token"
+	"github.com/h2hsecure/netbox/cmd"
+	"github.com/h2hsecure/netbox/internal/core/ports"
+	"github.com/h2hsecure/netbox/internal/core/service"
+	"github.com/h2hsecure/netbox/internal/repository/cache"
+	"github.com/h2hsecure/netbox/internal/repository/grpc"
+	"github.com/h2hsecure/netbox/internal/repository/token"
 )
 
 const CountryPolicyStr = "TR:noop,EN:allow,NL:deny,*:allow"

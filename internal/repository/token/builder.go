@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/ports"
 )
 
 type tokenBuilder struct {

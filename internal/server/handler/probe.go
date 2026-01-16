@@ -3,8 +3,8 @@ package handler
 import (
 	"fmt"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/gin-gonic/gin"
+	"github.com/h2hsecure/netbox/internal/core/domain"
 )
 
 /*

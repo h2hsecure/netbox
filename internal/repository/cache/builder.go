@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
+	"github.com/h2hsecure/netbox/internal/core/ports"
 	"github.com/rainycape/memcache"
 )
 

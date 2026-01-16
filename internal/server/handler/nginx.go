@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/ports"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -65,6 +65,11 @@ func CreateNginxAdapter(g *gin.Engine, service ports.Service, cfg domain.ConfigP
 }
 
 func (n *nginxHandler) authzHandler(c *gin.Context) {
+	// disable processing globally
+	if n.disableProcessing {
+		c.Status(http.StatusOK)
+		return
+	}
 	requestUri := c.Request.Header.Get("X-Original-Uri")
 
 	for _, t := range domain.StaticTypes {
@@ -162,10 +167,4 @@ func redirect(c *gin.Context, location, referer string, statusCode int) {
 	c.Writer.Header().Add("X-Location", location)
 	c.Writer.Header().Add("X-Referer", referer)
 	c.AbortWithStatus(statusCode)
-}
-
-func (n *nginxHandler) path(suffix string) string {
-	return fmt.Sprintf("%s/%s",
-		n.basePath,
-		suffix)
 }

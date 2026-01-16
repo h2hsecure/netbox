@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/domain"
 	"github.com/rs/zerolog/log"
 )
 

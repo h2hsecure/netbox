@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
 	"github.com/gin-gonic/gin"
+	"github.com/h2hsecure/netbox/internal/core/domain"
 	"golang.org/x/text/language"
 )
 
@@ -72,7 +72,7 @@ func NewConfigHandler(c *gin.Engine, cfg domain.ConfigParams) error {
 
 	var tags []language.Tag
 
-	fs.WalkDir(languageContent, ".", func(path string, d fs.DirEntry, err error) error {
+	fs.WalkDir(languageContent, ".", func(path string, d fs.DirEntry, err2 error) error {
 		if d.IsDir() {
 			return nil
 		}

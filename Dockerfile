@@ -3,7 +3,7 @@ FROM node:18-alpine AS ui
 COPY . .
 RUN cd ui && npm install && npm run build
 
-FROM golang:1.23.5-alpine AS builder
+FROM golang:1.25.5-alpine AS builder
 RUN apk add --update --no-cache gcc libc-dev
 WORKDIR '/app'
 COPY go.mod go.sum ./

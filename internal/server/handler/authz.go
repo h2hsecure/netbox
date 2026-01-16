@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"git.h2hsecure.com/ddos/waf/internal/core/domain"
-	"git.h2hsecure.com/ddos/waf/internal/core/ports"
 	"github.com/altcha-org/altcha-lib-go"
 	"github.com/gin-gonic/gin"
+	"github.com/h2hsecure/netbox/internal/core/domain"
+	"github.com/h2hsecure/netbox/internal/core/ports"
 	"github.com/rs/zerolog/log"
 )
 
